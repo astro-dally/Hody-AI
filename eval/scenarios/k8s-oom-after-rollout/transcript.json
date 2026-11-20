@@ -1,0 +1,42 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "oom_killed",
+      "summary": "Revision 2 cut the memory limit from 512Mi to 64Mi; the search process is OOMKilled (exit code 137) while loading its index shards.",
+      "object": "deployment/search",
+      "field": "spec.template.spec.containers[search].resources.limits.memory",
+      "evidence_ids": [
+        "E1",
+        "E5"
+      ],
+      "next_checks": [
+        "Apply the change with your usual deployment process and watch the rollout."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -21,6 +21,6 @@\n         name: search\n-        resources:\n-          limits:\n-            memory: 64Mi\n-          requests:\n-            memory: 64Mi\n+        resources:\n+          limits:\n+            memory: 512Mi\n+          requests:\n+            memory: 256Mi\n",
+      "explanation": "Restore the previous memory settings (limit 512Mi, request 256Mi) that worked in revision 1."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Restores earlier limits and keeps them in place."
+    }
+  }
+]

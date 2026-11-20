@@ -1,0 +1,2 @@
+2026-11-17T09:14:02Z container start image=shop/api-gateway:1.8 name=api-gateway
+2026-11-17T09:14:09Z container die exitCode=127 image=shop/api-gateway:1.8 name=api-gateway

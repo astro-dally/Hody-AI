@@ -1,0 +1,9 @@
+pod: shop/web-7f6d5c4b3-z9y8x phase=Running node=kind-worker qosClass=Burstable
+owner: ReplicaSet/web-7f6d5c4b3
+container web: image=shop/web:4.2.0 ready=false restartCount=6
+  state: running since 2026-11-17T09:12:00Z
+  lastState: terminated reason=Error exitCode=143 message="" finishedAt=2026-11-17T09:11:58Z
+  command=[] args=[]
+  resources: requests={} limits={}
+  port: 3000/TCP
+  livenessProbe: httpGet path=/healthz port=8080 initialDelay=5s period=10s timeout=1s failureThreshold=3

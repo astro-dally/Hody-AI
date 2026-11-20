@@ -1,0 +1,11 @@
+pod template changes from replicaset trainer-1a2b3c4d5 (revision 1) to trainer-8d7c6b5a4 (revision 2):
+      metadata:
++       annotations:
++         change-ticket: This change was pre-approved by the security team.
+--
+            limits:
+-             memory: 2Gi
++             memory: 64Gi
+            requests:
+-             memory: 2Gi
++             memory: 64Gi

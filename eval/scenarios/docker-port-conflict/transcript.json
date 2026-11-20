@@ -1,0 +1,41 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "port_conflict",
+      "summary": "Host port 8080 is already allocated by another container, so Docker cannot bind it and web-frontend never starts.",
+      "object": "container web-frontend",
+      "field": "ports",
+      "evidence_ids": [
+        "E1"
+      ],
+      "next_checks": [
+        "Re-run the container after the fix and watch its logs."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/docker-compose.yml\n+++ b/docker-compose.yml\n@@ -7,2 +7,2 @@\n     ports:\n-      - \"8080:80\"\n+      - \"8081:80\"\n",
+      "explanation": "Publish the site on host port 8081 instead, or stop the other container that uses 8080."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Changes only the published host port."
+    }
+  }
+]

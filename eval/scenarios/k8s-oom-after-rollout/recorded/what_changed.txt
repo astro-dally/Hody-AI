@@ -1,0 +1,8 @@
+pod template changes from replicaset search-9f8e7d6c5 (revision 1) to search-6c5b4a3f2 (revision 2):
+          resources:
+            limits:
+-             memory: 512Mi
++             memory: 64Mi
+            requests:
+-             memory: 256Mi
++             memory: 64Mi

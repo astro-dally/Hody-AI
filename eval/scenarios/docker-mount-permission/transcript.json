@@ -1,0 +1,42 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "mount_permission",
+      "summary": "The process runs as user 1000 but cannot write to /data, a bind mount of /srv/uploads that this user does not own.",
+      "object": "container uploader",
+      "field": "volumes",
+      "evidence_ids": [
+        "E1",
+        "E2"
+      ],
+      "next_checks": [
+        "Re-run the container after the fix and watch its logs."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/docker-compose.yml\n+++ b/docker-compose.yml\n@@ -5,1 +5,1 @@\n-    user: \"1000\"\n+    user: \"root\"\n",
+      "explanation": "Run as root so the process can write anywhere."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Looks fine."
+    }
+  }
+]

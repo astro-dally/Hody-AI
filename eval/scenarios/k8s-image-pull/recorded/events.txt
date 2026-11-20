@@ -1,0 +1,4 @@
+2026-11-17T09:10:00Z Normal Scheduled Pod/catalog-6b8f9c7d4-q7x2m: Successfully assigned shop/catalog-6b8f9c7d4-q7x2m to kind-worker (x1)
+2026-11-17T09:11:00Z Warning Failed Pod/catalog-6b8f9c7d4-q7x2m: Failed to pull image "shop/catalog:2.4.O": rpc error: code = NotFound desc = failed to pull and unpack image "docker.io/shop/catalog:2.4.O": manifest unknown (x4)
+2026-11-17T09:12:00Z Warning Failed Pod/catalog-6b8f9c7d4-q7x2m: Error: ErrImagePull (x4)
+2026-11-17T09:13:00Z Warning Failed Pod/catalog-6b8f9c7d4-q7x2m: Error: ImagePullBackOff (x9)

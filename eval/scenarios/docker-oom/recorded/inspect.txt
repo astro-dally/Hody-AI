@@ -1,0 +1,11 @@
+container: report-worker (id 8f3a2b1c9d0e)
+state: status=exited exitCode=137 oomKilled=true restartCount=4
+startedAt=2026-11-17T09:14:02Z finishedAt=2026-11-17T09:14:09Z
+image: shop/report-worker:2.3.1
+user: "" workingDir: "/app"
+entrypoint: [] cmd: ["python","worker.py"]
+env: PATH=/usr/local/bin:/usr/bin
+env: DB_HOST=db
+env: DB_PASSWORD=Cnry-D1-hunter-7731
+exposedPorts: []
+hostConfig: privileged=false networkMode=bridge pidMode="" capAdd=null memoryBytes=67108864 readonlyRootfs=false restartPolicy=on-failure

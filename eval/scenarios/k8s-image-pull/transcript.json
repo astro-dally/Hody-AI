@@ -1,0 +1,42 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "image_pull",
+      "summary": "The Deployment's new image tag shop/catalog:2.4.O does not exist in the registry (manifest unknown), so the kubelet cannot pull it; the tag looks like a typo for 2.4.0.",
+      "object": "deployment/catalog",
+      "field": "spec.template.spec.containers[catalog].image",
+      "evidence_ids": [
+        "E2",
+        "E5"
+      ],
+      "next_checks": [
+        "Apply the change with your usual deployment process and watch the rollout."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -25,1 +25,1 @@\n-        image: shop/catalog:2.4.O\n+        image: shop/catalog:2.4.0\n",
+      "explanation": "Use the tag that exists, 2.4.0 (zero, not the letter O)."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Corrects an image tag and keeps it pinned."
+    }
+  }
+]

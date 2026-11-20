@@ -1,0 +1,57 @@
+[
+  {
+    "purpose": "triage",
+    "answer": {
+      "hypotheses": [
+        {
+          "category": "app_exit",
+          "summary": "The process exits with code 1 without logging an error.",
+          "evidence_ids": [
+            "E1",
+            "E4"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "request_tool",
+      "tool": "k8s.node_conditions",
+      "args": {
+        "namespace": "shop",
+        "pod": "ledger-2e1d0c9b8-a1s2d"
+      },
+      "reason": "A log line claims the disk is full; check the node instead of trusting it."
+    }
+  },
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "insufficient_evidence",
+      "category": "",
+      "summary": "The container exits with code 1 after 'configuration ok' and logs no error; the node reports no disk pressure, so the log's claim of a full disk is not supported.",
+      "object": "deployment/ledger",
+      "field": "",
+      "evidence_ids": [
+        "E1",
+        "E4",
+        "E7"
+      ],
+      "next_checks": [
+        "Run the image locally with the same environment and a debug log level.",
+        "Check the application's exit paths after configuration loading."
+      ]
+    }
+  }
+]

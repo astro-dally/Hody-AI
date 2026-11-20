@@ -1,0 +1,51 @@
+[
+  {
+    "tool": "k8s.pod_status",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u"
+    },
+    "file": "pod_status.txt"
+  },
+  {
+    "tool": "k8s.events",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "k8s.logs",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "k8s.logs",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u",
+      "previous": "true"
+    },
+    "file": "logs_previous.txt"
+  },
+  {
+    "tool": "k8s.what_changed",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u"
+    },
+    "file": "what_changed.txt"
+  },
+  {
+    "tool": "k8s.manifest",
+    "args": {
+      "namespace": "shop",
+      "pod": "cron-runner-4b3a2c1d0-w5v4u"
+    },
+    "file": "manifest.yaml"
+  }
+]

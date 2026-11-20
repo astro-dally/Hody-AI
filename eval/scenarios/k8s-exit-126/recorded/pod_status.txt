@@ -1,0 +1,8 @@
+pod: shop/cron-runner-4b3a2c1d0-w5v4u phase=Running node=kind-worker qosClass=Burstable
+owner: ReplicaSet/cron-runner-4b3a2c1d0
+container cron-runner: image=shop/cron-runner:1.0.3 ready=false restartCount=7
+  state: waiting reason=CrashLoopBackOff message="back-off 5m0s restarting failed container"
+  lastState: terminated reason=Error exitCode=126 message="" finishedAt=2026-11-17T09:12:03Z
+  command=["/scripts/run.sh"] args=[]
+  resources: requests={} limits={}
+  env: SLACK_BOT_TOKEN=xoxb-CnryK6-2048-slackbottoken

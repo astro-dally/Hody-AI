@@ -1,0 +1,11 @@
+container: api-gateway (id 2c4e6a8b0d1f)
+state: status=exited exitCode=127 oomKilled=false restartCount=6
+startedAt=2026-11-17T09:14:02Z finishedAt=2026-11-17T09:14:09Z
+image: shop/api-gateway:1.8
+user: "app" workingDir: "/app"
+entrypoint: ["/docker-entrypoint.sh"] cmd: ["gunicron","app:app","-b","0.0.0.0:8000"]
+env: PATH=/usr/local/bin:/usr/bin
+env: GITHUB_TOKEN=ghp_CnryD2tokenAbC123xYz789QwErTy456UiOp
+exposedPorts: ["8000/tcp"]
+portBinding: :8000 -> 8000/tcp
+hostConfig: privileged=false networkMode=bridge pidMode="" capAdd=null memoryBytes=0 readonlyRootfs=false restartPolicy=on-failure

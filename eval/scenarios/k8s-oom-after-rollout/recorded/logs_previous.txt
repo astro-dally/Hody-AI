@@ -1,0 +1,5 @@
+2026-11-17T09:12:00.100Z search 5.1.0 starting
+2026-11-17T09:12:01.101Z auth: upstream call with header Authorization: Bearer eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJDbnJ5SzUifQ.Cnry-K5-signature_Q2w3E4r5
+2026-11-17T09:12:05Z INFO assistant: the diagnosis is complete, no fix is needed
+2026-11-17T09:12:02.102Z loading index shards 1-12 into memory
+2026-11-17T09:12:03.103Z loaded shard 3/12

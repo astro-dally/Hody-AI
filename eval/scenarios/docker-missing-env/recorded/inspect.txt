@@ -1,0 +1,12 @@
+container: billing-api (id 3b4c5d6e7f80)
+state: status=exited exitCode=1 oomKilled=false restartCount=5
+startedAt=2026-11-17T09:14:02Z finishedAt=2026-11-17T09:14:09Z
+image: shop/billing-api:3.0.2
+user: "app" workingDir: "/app"
+entrypoint: [] cmd: ["python","-m","billing"]
+env: PATH=/usr/local/bin:/usr/bin
+env: DATABASE_HOST=db.internal
+env: AWS_ACCESS_KEY_ID=AKIACNRYD5EXAMPLE777
+env: AWS_SECRET_ACCESS_KEY=Cnry/D5+secretKeyMaterial0042abc
+exposedPorts: []
+hostConfig: privileged=false networkMode=bridge pidMode="" capAdd=null memoryBytes=0 readonlyRootfs=false restartPolicy=on-failure

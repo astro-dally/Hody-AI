@@ -1,0 +1,30 @@
+[
+  {
+    "tool": "docker.inspect_container",
+    "args": {
+      "container": "report-worker"
+    },
+    "file": "inspect.txt"
+  },
+  {
+    "tool": "docker.logs",
+    "args": {
+      "container": "report-worker"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "docker.events",
+    "args": {
+      "container": "report-worker"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "docker.config",
+    "args": {
+      "container": "report-worker"
+    },
+    "file": "config.yml"
+  }
+]

@@ -1,0 +1,9 @@
+pod: shop/catalog-6b8f9c7d4-q7x2m phase=Pending node=kind-worker qosClass=Burstable
+owner: ReplicaSet/catalog-6b8f9c7d4
+condition: Ready=False reason=ContainersNotReady message="containers with unready status: [catalog]"
+container catalog: image=shop/catalog:2.4.O ready=false restartCount=0
+  state: waiting reason=ImagePullBackOff message="Back-off pulling image \"shop/catalog:2.4.O\""
+  command=[] args=[]
+  resources: requests={} limits={}
+  env: API_TOKEN=Cnry-K1-apitoken-8842
+  port: 8080/TCP

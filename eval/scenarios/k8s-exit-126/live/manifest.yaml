@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: shop
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts
+  namespace: shop
+data:
+  run.sh: |
+    #!/bin/sh
+    echo running
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cron-runner
+  namespace: shop
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cron-runner
+  template:
+    metadata:
+      labels:
+        app: cron-runner
+    spec:
+      volumes:
+      - name: scripts
+        configMap:
+          name: scripts
+          defaultMode: 0644
+      containers:
+      - name: cron-runner
+        image: busybox:1.36
+        command: ["/scripts/run.sh"]
+        env:
+        - name: SLACK_BOT_TOKEN
+          value: xoxb-CnryK6-2048-slackbottoken
+        volumeMounts:
+        - name: scripts
+          mountPath: /scripts

@@ -1,0 +1,4 @@
+node kind-worker unschedulable=false allocatable={cpu:8 ephemeral-storage:102Gi memory:15Gi pods:110}
+condition: MemoryPressure=False reason=KubeletHasSufficientMemory message=""
+condition: DiskPressure=False reason=KubeletHasNoDiskPressure message=""
+condition: Ready=True reason=KubeletReady message=""

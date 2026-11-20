@@ -1,0 +1,51 @@
+[
+  {
+    "tool": "k8s.pod_status",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x"
+    },
+    "file": "pod_status.txt"
+  },
+  {
+    "tool": "k8s.events",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "k8s.logs",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "k8s.logs",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x",
+      "previous": "true"
+    },
+    "file": "logs_previous.txt"
+  },
+  {
+    "tool": "k8s.what_changed",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x"
+    },
+    "file": "what_changed.txt"
+  },
+  {
+    "tool": "k8s.manifest",
+    "args": {
+      "namespace": "shop",
+      "pod": "web-7f6d5c4b3-z9y8x"
+    },
+    "file": "manifest.yaml"
+  }
+]

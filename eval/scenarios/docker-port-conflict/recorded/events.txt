@@ -1,0 +1,2 @@
+2026-11-17T09:14:02Z container start image=nginx:1.27 name=web-frontend
+2026-11-17T09:14:09Z container die exitCode=128 image=nginx:1.27 name=web-frontend

@@ -1,0 +1,8 @@
+pod: shop/orders-5c9d8f7b6-m4n8k phase=Pending node=kind-worker qosClass=Burstable
+owner: ReplicaSet/orders-5c9d8f7b6
+container orders: image=shop/orders:1.12.0 ready=false restartCount=0
+  state: waiting reason=CreateContainerConfigError message="couldn't find key database_url in ConfigMap shop/orders-config"
+  command=[] args=[]
+  resources: requests={} limits={}
+  env: DATABASE_URL from configMapKeyRef orders-config key=database_url
+  env: SMTP_PASSWORD=Cnry-K2-smtp-5530

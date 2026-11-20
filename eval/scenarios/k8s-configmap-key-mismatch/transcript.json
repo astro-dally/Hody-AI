@@ -1,0 +1,54 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "request_tool",
+      "tool": "k8s.configmap_keys",
+      "args": {
+        "namespace": "shop",
+        "name": "orders-config"
+      },
+      "reason": "Check which keys the ConfigMap has."
+    }
+  },
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "config_reference",
+      "summary": "The container's DATABASE_URL reads key database_url from ConfigMap orders-config, but the ConfigMap only has DATABASE_URL (upper case), so the container cannot be created.",
+      "object": "deployment/orders",
+      "field": "spec.template.spec.containers[orders].env[DATABASE_URL].valueFrom.configMapKeyRef.key",
+      "evidence_ids": [
+        "E1",
+        "E7"
+      ],
+      "next_checks": [
+        "Apply the change with your usual deployment process and watch the rollout."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -25,2 +25,2 @@\n             configMapKeyRef:\n-              key: database_url\n+              key: DATABASE_URL\n",
+      "explanation": "Reference the key exactly as it is spelled in the ConfigMap: DATABASE_URL."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Fixes a key reference; no security impact."
+    }
+  }
+]

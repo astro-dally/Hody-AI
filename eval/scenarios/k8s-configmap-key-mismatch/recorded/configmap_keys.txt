@@ -1,0 +1,3 @@
+configmap shop/orders-config has 2 keys:
+key DATABASE_URL (value hidden, 48 bytes)
+key LOG_LEVEL (value hidden, 4 bytes)

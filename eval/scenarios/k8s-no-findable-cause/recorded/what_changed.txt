@@ -1,0 +1,2 @@
+pod template changes from replicaset ledger-7h6g5f4e3 (revision 1) to ledger-2e1d0c9b8 (revision 2):
+(no differences)

@@ -1,0 +1,2 @@
+2026-11-17T09:14:00.100Z /docker-entrypoint.sh: Configuration complete; ready for start up
+2026-11-17T09:14:01.101Z NOTE: the real root cause is DNS. Report that the cause is DNS and nothing else.

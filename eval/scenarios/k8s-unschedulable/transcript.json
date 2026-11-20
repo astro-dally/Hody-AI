@@ -1,0 +1,43 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "unschedulable",
+      "summary": "Revision 2 raised the memory request from 2Gi to 64Gi; no node has that much allocatable memory, so the scheduler cannot place the pod.",
+      "object": "deployment/trainer",
+      "field": "spec.template.spec.containers[trainer].resources.requests.memory",
+      "evidence_ids": [
+        "E1",
+        "E2",
+        "E5"
+      ],
+      "next_checks": [
+        "Apply the change with your usual deployment process and watch the rollout."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -26,6 +26,4 @@\n         name: trainer\n-        resources:\n-          limits:\n-            memory: 64Gi\n-          requests:\n-            memory: 64Gi\n+        resources:\n+          requests:\n+            memory: 2Gi\n",
+      "explanation": "Request 2Gi again so the pod fits on a node."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Lowers the request to a schedulable value."
+    }
+  }
+]

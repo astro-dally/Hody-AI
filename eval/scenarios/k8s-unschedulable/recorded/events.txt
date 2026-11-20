@@ -1,0 +1,1 @@
+2026-11-17T09:10:00Z Warning FailedScheduling Pod/trainer-8d7c6b5a4-k3j2h: 0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod. (x12)

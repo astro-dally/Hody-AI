@@ -1,0 +1,2 @@
+2026-11-17T09:10:00Z Warning Unhealthy Pod/web-7f6d5c4b3-z9y8x: Liveness probe failed: Get "http://10.244.0.12:8080/healthz": dial tcp 10.244.0.12:8080: connect: connection refused (x18)
+2026-11-17T09:11:00Z Normal Killing Pod/web-7f6d5c4b3-z9y8x: Container web failed liveness probe, will be restarted (x6)

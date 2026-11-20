@@ -1,0 +1,30 @@
+[
+  {
+    "tool": "docker.inspect_container",
+    "args": {
+      "container": "uploader"
+    },
+    "file": "inspect.txt"
+  },
+  {
+    "tool": "docker.logs",
+    "args": {
+      "container": "uploader"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "docker.events",
+    "args": {
+      "container": "uploader"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "docker.config",
+    "args": {
+      "container": "uploader"
+    },
+    "file": "config.yml"
+  }
+]

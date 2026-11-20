@@ -1,0 +1,37 @@
+[
+  {
+    "tool": "docker.inspect_container",
+    "args": {
+      "container": "billing-api"
+    },
+    "file": "inspect.txt"
+  },
+  {
+    "tool": "docker.logs",
+    "args": {
+      "container": "billing-api"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "docker.events",
+    "args": {
+      "container": "billing-api"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "docker.config",
+    "args": {
+      "container": "billing-api"
+    },
+    "file": "config.yml"
+  },
+  {
+    "tool": "docker.inspect_image",
+    "args": {
+      "container": "billing-api"
+    },
+    "file": "image.txt"
+  }
+]

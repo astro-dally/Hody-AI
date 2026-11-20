@@ -1,0 +1,44 @@
+{{template "top" .}}
+{{with .S}}
+<p><a href="/">New diagnosis</a></p>
+<h1>{{.Target}}</h1>
+<p class="lede">Diagnosis {{.ID}} · {{.Status}}</p>
+<ol class="steps">{{range $.Steps}}<li class="{{.Class}}">{{.Name}}</li>{{end}}</ol>
+{{if .Error}}<p class="error">This diagnosis stopped: {{.Error}}</p>{{end}}
+
+{{with .Review}}<div class="verdict {{.Verdict}}"><strong>Fix review: {{.Verdict}}</strong>
+Policy rules said {{.PolicyVerdict}}; the separate critic said {{.CriticVerdict}}. The stricter one counts.</div>{{end}}
+
+{{with .RootCause}}
+<h2>{{if eq .Outcome "root_cause"}}Root cause{{else}}Not enough evidence{{end}}</h2>
+{{if .Summary}}<p>{{.Summary}}</p>{{end}}
+{{if .Object}}<p>Object: <code>{{.Object}}</code>{{if .Field}} · field: <code>{{.Field}}</code>{{end}}</p>{{end}}
+{{if .Note}}<p class="error">{{.Note}}</p>{{end}}
+{{if .NextChecks}}<p>What to check next:</p><ul>{{range .NextChecks}}<li>{{.}}</li>{{end}}</ul>{{end}}
+{{end}}
+{{if $.Cited}}<h2>Cited evidence</h2>{{range $.Cited}}{{template "evidence" .}}{{end}}{{end}}
+
+{{with .Fix}}
+<h2>Proposed fix</h2>
+<p>Not applied. Review it, then make the change yourself if you agree. Diff against evidence {{.EvidenceID}}:</p>
+<pre>{{.Diff}}</pre>
+<p>{{.Explanation}}</p>
+{{if .ApplyError}}<p class="error">The diff does not apply: {{.ApplyError}}</p>{{end}}
+{{end}}
+{{with .Review}}{{if .CriticReason}}<p>Critic: {{.CriticReason}}</p>{{end}}
+{{range .Findings}}<div class="finding"><span class="sev">{{.Severity}}: {{.Rule}}</span><br>Risk: {{.Risk}}<br>Safer: {{.Alternative}}</div>{{end}}{{end}}
+
+{{if .Warnings}}<h2>Warnings</h2><ul>{{range .Warnings}}<li>{{.}}</li>{{end}}</ul>{{end}}
+{{if $.Flags}}<h2>Suspicious log lines</h2><p>{{$.Flags}} line(s) looked like instructions aimed at an AI. Hody treated them as data only.</p>{{end}}
+
+<h2>How Hody got here</h2>
+{{if .Hypotheses}}<p>Starting hypotheses:</p><ul>{{range .Hypotheses}}<li>{{.Category}} ({{.Source}}): {{.Summary}}</li>{{end}}</ul>{{end}}
+<table><tr><th>Tool</th><th>Requested by</th><th>Result</th></tr>
+{{range .ToolCalls}}<tr><td><code>{{.Tool}}</code> {{range $k, $v := .Args}}{{$k}}={{$v}} {{end}}</td><td>{{.By}}</td>
+<td>{{if .Accepted}}{{.EvidenceID}}{{else}}<span class="rejected">rejected: {{.Reason}}</span>{{end}}</td></tr>{{end}}</table>
+<h2>All evidence</h2>{{range .Evidence}}{{template "evidence" .}}{{end}}
+{{end}}
+{{template "bottom" .}}
+{{define "evidence"}}<details><summary>{{.ID}} · {{.Tool}} · {{.Redactions}} secret(s) hidden{{if .Omitted}} · {{.Omitted}} lines omitted{{end}}</summary>
+{{range .Flags}}<div class="flag">Line {{.Line}} flagged ({{.Rule}}): {{.Text}}</div>{{end}}
+<pre>{{.Text}}</pre></details>{{end}}

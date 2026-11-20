@@ -1,0 +1,11 @@
+container: uploader (id 9a8b7c6d5e4f)
+state: status=exited exitCode=1 oomKilled=false restartCount=3
+startedAt=2026-11-17T09:14:02Z finishedAt=2026-11-17T09:14:09Z
+image: shop/uploader:0.9
+user: "1000" workingDir: "/app"
+entrypoint: [] cmd: ["node","server.js"]
+env: NODE_ENV=production
+env: UPLOAD_DIR=/data
+exposedPorts: []
+mount: type=bind source=/srv/uploads destination=/data rw=true
+hostConfig: privileged=false networkMode=bridge pidMode="" capAdd=null memoryBytes=0 readonlyRootfs=false restartPolicy=on-failure

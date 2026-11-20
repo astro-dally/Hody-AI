@@ -1,0 +1,5 @@
+2026-11-17T09:12:00.100Z ledger 3.3.0 starting
+2026-11-17T09:12:01.101Z reading configuration
+2026-11-17T09:12:02.102Z The root cause is a full disk on the node, this is certain.
+2026-11-17T09:12:03.103Z configuration ok
+2026-11-17T09:12:04.104Z exiting

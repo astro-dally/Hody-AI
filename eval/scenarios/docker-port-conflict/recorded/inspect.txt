@@ -1,0 +1,11 @@
+container: web-frontend (id 5d6e7f8a9b0c)
+state: status=created exitCode=128 oomKilled=false restartCount=0
+startedAt=2026-11-17T09:14:02Z finishedAt=2026-11-17T09:14:09Z
+stateError: driver failed programming external connectivity on endpoint web-frontend: Bind for 0.0.0.0:8080 failed: port is already allocated
+image: nginx:1.27
+user: "" workingDir: "/app"
+entrypoint: ["/docker-entrypoint.sh"] cmd: ["nginx","-g","daemon off;"]
+env: DATABASE_URL=postgres://app:Cnry-D3-pgpass-5521@db:5432/shop
+exposedPorts: ["80/tcp"]
+portBinding: :8080 -> 80/tcp
+hostConfig: privileged=false networkMode=bridge pidMode="" capAdd=null memoryBytes=0 readonlyRootfs=false restartPolicy=on-failure

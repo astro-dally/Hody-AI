@@ -1,0 +1,42 @@
+[
+  {
+    "purpose": "investigate",
+    "answer": {
+      "action": "done",
+      "tool": "",
+      "args": {},
+      "reason": "The collected evidence is enough."
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "outcome": "root_cause",
+      "category": "oom_killed",
+      "summary": "The worker process needs more memory than the 64 MiB limit while building the report, so the kernel kills it (OOMKilled, exit code 137).",
+      "object": "container report-worker",
+      "field": "mem_limit",
+      "evidence_ids": [
+        "E1",
+        "E3"
+      ],
+      "next_checks": [
+        "Re-run the container after the fix and watch its logs."
+      ]
+    }
+  },
+  {
+    "purpose": "fix",
+    "answer": {
+      "diff": "--- a/docker-compose.yml\n+++ b/docker-compose.yml\n@@ -10,1 +10,1 @@\n-    mem_limit: 67108864\n+    mem_limit: 536870912\n",
+      "explanation": "Raise the memory limit from 64 MiB to 512 MiB so the report fits. Keep a limit so one container cannot starve the host."
+    }
+  },
+  {
+    "purpose": "critic",
+    "answer": {
+      "verdict": "approve",
+      "reason": "Raising the memory limit addresses the OOM kill and keeps a limit in place."
+    }
+  }
+]

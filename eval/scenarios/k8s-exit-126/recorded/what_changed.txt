@@ -1,0 +1,2 @@
+pod template changes from replicaset cron-runner-0a9b8c7d6 (revision 1) to cron-runner-4b3a2c1d0 (revision 2):
+(no differences)

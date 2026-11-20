@@ -1,0 +1,4 @@
+image: 1a2b3c4d5e6f tags=["shop/billing-api:3.0.2"] created=2026-11-10T12:00:00Z platform=linux/amd64
+user: "app" workingDir: "/srv"
+entrypoint: null cmd: ["python","-m","billing"]
+env: ["PATH=/usr/local/bin:/usr/bin","DB_PORT=5432"]

@@ -1,0 +1,30 @@
+[
+  {
+    "tool": "docker.inspect_container",
+    "args": {
+      "container": "web-frontend"
+    },
+    "file": "inspect.txt"
+  },
+  {
+    "tool": "docker.logs",
+    "args": {
+      "container": "web-frontend"
+    },
+    "file": "logs.txt"
+  },
+  {
+    "tool": "docker.events",
+    "args": {
+      "container": "web-frontend"
+    },
+    "file": "events.txt"
+  },
+  {
+    "tool": "docker.config",
+    "args": {
+      "container": "web-frontend"
+    },
+    "file": "config.yml"
+  }
+]

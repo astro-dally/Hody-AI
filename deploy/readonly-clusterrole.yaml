@@ -1,0 +1,41 @@
+# Read-only permissions for Hody. Bind this ClusterRole with a RoleBinding
+# in each namespace you want to diagnose (and a ClusterRoleBinding only if
+# you want node conditions, which are cluster-scoped).
+#
+# Deliberately absent: secrets (Hody never reads them), watch, and every
+# write verb (create, update, patch, delete, deletecollection).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: hody-readonly
+rules:
+- apiGroups: [""]
+  resources: ["pods", "pods/log"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["events", "configmaps", "services", "resourcequotas"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["nodes"]
+  verbs: ["get"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "replicasets"]
+  verbs: ["get", "list"]
+- apiGroups: ["discovery.k8s.io"]
+  resources: ["endpointslices"]
+  verbs: ["list"]
+---
+# Example: allow user "student" to diagnose namespace "shop".
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: hody-readonly
+  namespace: shop
+subjects:
+- kind: User
+  name: student
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: hody-readonly
+  apiGroup: rbac.authorization.k8s.io

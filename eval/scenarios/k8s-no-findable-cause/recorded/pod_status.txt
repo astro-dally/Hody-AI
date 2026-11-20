@@ -1,0 +1,8 @@
+pod: shop/ledger-2e1d0c9b8-a1s2d phase=Running node=kind-worker qosClass=Burstable
+owner: ReplicaSet/ledger-2e1d0c9b8
+container ledger: image=shop/ledger:3.3.0 ready=false restartCount=9
+  state: waiting reason=CrashLoopBackOff message="back-off 5m0s restarting failed container"
+  lastState: terminated reason=Error exitCode=1 message="" finishedAt=2026-11-17T09:12:04Z
+  command=[] args=[]
+  resources: requests={} limits={}
+  env: STRIPE_KEY=sk_canary_CnryK7stripeKey0123456789

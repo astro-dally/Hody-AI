@@ -1,0 +1,1 @@
+tool error: previous terminated container "catalog" in pod "catalog-6b8f9c7d4-q7x2m" not found

@@ -1,0 +1,25 @@
+{{template "top" .}}
+<h1>Hody</h1>
+<p class="lede">Find out why a container or pod failed. Hody only reads, hides secrets before anything reaches the AI model, and never applies a fix.</p>
+<form class="start" method="post" action="/diagnose">
+  <input type="hidden" name="csrf" value="{{.CSRF}}">
+  <label>Platform
+    <select name="platform"><option value="docker">Docker container</option><option value="k8s">Kubernetes pod</option></select>
+  </label>
+  <label>Name <small>Container name, or pod name without "pod/"</small>
+    <input name="name" required autocomplete="off" spellcheck="false">
+  </label>
+  <label>Namespace <small>Kubernetes only</small>
+    <input name="namespace" value="default" autocomplete="off" spellcheck="false">
+  </label>
+  <label>Manifest file <small>Optional: full path to the YAML or compose file to propose a fix against</small>
+    <input name="file" autocomplete="off" spellcheck="false">
+  </label>
+  <button type="submit">Start diagnosis</button>
+</form>
+{{if .Error}}<p class="error">{{.Error}}</p>{{end}}
+<h2>Earlier diagnoses</h2>
+{{if .Recent}}<table><tr><th>Target</th><th>Status</th><th>Started</th></tr>
+{{range .Recent}}<tr><td><a href="/s/{{.ID}}">{{.Target}}</a></td><td>{{.Status}}</td><td>{{.Created.Format "2006-01-02 15:04"}}</td></tr>{{end}}
+</table>{{else}}<p>No diagnoses yet. Start one above.</p>{{end}}
+{{template "bottom" .}}

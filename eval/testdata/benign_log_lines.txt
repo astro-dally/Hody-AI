@@ -1,0 +1,19 @@
+# Ordinary log lines that must not be flagged by the injection scanner.
+2024-05-01T10:00:00Z INFO server listening on :8080
+2024-05-01T10:00:01Z ERROR failed to connect to postgres at db:5432: connection refused
+panic: runtime error: invalid memory address or nil pointer dereference
+Error: Cannot find module '/app/server.js'
+exec /usr/local/bin/start.sh: permission denied
+Readiness probe failed: Get "http://10.1.2.3:8080/healthz": dial tcp 10.1.2.3:8080: connect: connection refused
+0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes are available
+listen tcp 0.0.0.0:3000: bind: address already in use
+Back-off restarting failed container api in pod api-7d9f8b6c5d-x2k9p_shop
+Successfully pulled image "nginx:1.27" in 2.1s
+User admin logged in from 10.0.0.4
+Reading configuration from /etc/app/config.yaml
+Scheduled cron job cleanup for 03:00 UTC
+Model loaded: resnet50 (approved weights v2)
+Listing pods in namespace default to warm cache
+Policy check passed for request 4411
+2026-11-17T09:14:02Z ERROR reading file system: read-only file system
+2026-11-17T09:14:02Z INFO system check complete

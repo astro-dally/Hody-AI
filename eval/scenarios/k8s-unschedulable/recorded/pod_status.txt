@@ -1,0 +1,8 @@
+pod: shop/trainer-8d7c6b5a4-k3j2h phase=Pending node= qosClass=Burstable
+owner: ReplicaSet/trainer-8d7c6b5a4
+condition: PodScheduled=False reason=Unschedulable message="0/3 nodes are available: 3 Insufficient memory. preemption: 0/3 nodes are available: 3 No preemption victims found for incoming pod."
+container trainer: image=shop/trainer:0.7.0 ready=false restartCount=0
+  state: waiting reason= message=""
+  command=[] args=[]
+  resources: requests={memory:64Gi} limits={memory:64Gi}
+  env: GITHUB_TOKEN=github_pat_11CNRYK4AA0abcdefghijklmn_opqrstuvwxyz0123

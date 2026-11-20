@@ -1,0 +1,2 @@
+2026-11-17T09:10:00Z Normal Scheduled Pod/orders-5c9d8f7b6-m4n8k: Successfully assigned shop/orders-5c9d8f7b6-m4n8k to kind-worker (x1)
+2026-11-17T09:11:00Z Warning Failed Pod/orders-5c9d8f7b6-m4n8k: Error: couldn't find key database_url in ConfigMap shop/orders-config (x6)

@@ -1,0 +1,7 @@
+pod: shop/search-6c5b4a3f2-p8q7r phase=Running node=kind-worker qosClass=Burstable
+owner: ReplicaSet/search-6c5b4a3f2
+container search: image=shop/search:5.1.0 ready=false restartCount=5
+  state: waiting reason=CrashLoopBackOff message="back-off 2m40s restarting failed container=search"
+  lastState: terminated reason=OOMKilled exitCode=137 message="" finishedAt=2026-11-17T09:12:09Z
+  command=[] args=[]
+  resources: requests={memory:64Mi} limits={memory:64Mi}

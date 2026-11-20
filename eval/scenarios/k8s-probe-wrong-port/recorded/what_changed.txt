@@ -1,0 +1,2 @@
+pod template changes from replicaset web-6e5d4c3b2 (revision 1) to web-7f6d5c4b3 (revision 2):
+(no differences)

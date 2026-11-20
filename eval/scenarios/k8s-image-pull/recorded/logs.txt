@@ -1,0 +1,1 @@
+tool error: container "catalog" in pod "catalog-6b8f9c7d4-q7x2m" is waiting to start: trying and failing to pull image

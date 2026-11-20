@@ -1,0 +1,2 @@
+2026-11-17T09:14:02Z container start image=shop/uploader:0.9 name=uploader
+2026-11-17T09:14:09Z container die exitCode=1 image=shop/uploader:0.9 name=uploader
