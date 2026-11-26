@@ -222,9 +222,10 @@ internal/
 │   ├── docker/        Docker read-only client + tool bindings
 │   └── k8s/           Kubernetes read-only client + tool bindings
 └── web/               Localhost web UI (stdlib, no JS framework)
-eval/                  12 scenarios, harness, grader
+eval/                  12 scenarios, harness, grader, run-live.sh (live runner)
+scripts/               Live-test helpers: mac.sh, ec2.sh, llm-proxy.py
 deploy/                Dockerfile + read-only ClusterRole
-docs/                  Architecture, usage, security, build report
+docs/                  Architecture, usage, security, build report, live test guide
 ```
 
 ## Documentation
