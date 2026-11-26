@@ -2,9 +2,12 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"hody/internal/llm"
 )
@@ -32,7 +35,22 @@ func llmConfig(recordDir string) llm.Config {
 	if len(cfg.Canaries) > 0 {
 		cfg.RecordDir = recordDir
 	}
+	cfg.Timeout = llmTimeout(os.Getenv("HODY_LLM_TIMEOUT"))
 	return cfg
+}
+
+// llmTimeout parses HODY_LLM_TIMEOUT, a whole number of seconds. Slow
+// local models (for example on a CPU) need more than the default.
+func llmTimeout(v string) time.Duration {
+	if v = strings.TrimSpace(v); v == "" {
+		return llm.DefaultTimeout
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		fmt.Fprintf(os.Stderr, "hody: ignoring HODY_LLM_TIMEOUT=%q (want a whole number of seconds); using %s\n", v, llm.DefaultTimeout)
+		return llm.DefaultTimeout
+	}
+	return time.Duration(n) * time.Second
 }
 
 // parseInterleaved parses flags that may come before or after positional

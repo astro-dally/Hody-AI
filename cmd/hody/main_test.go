@@ -6,6 +6,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"hody/internal/model"
 )
@@ -54,5 +55,19 @@ func TestReplayEvalCommand(t *testing.T) {
 	}
 	if !strings.Contains(out.String(), "12 of 12 scenarios passed all checks.") {
 		t.Fatal(out.String())
+	}
+}
+
+func TestLLMTimeout(t *testing.T) {
+	cases := map[string]time.Duration{"": 180 * time.Second, "900": 900 * time.Second, " 60 ": time.Minute,
+		"0": 180 * time.Second, "-5": 180 * time.Second, "10m": 180 * time.Second}
+	for in, want := range cases {
+		if got := llmTimeout(in); got != want {
+			t.Errorf("llmTimeout(%q) = %s, want %s", in, got, want)
+		}
+	}
+	t.Setenv("HODY_LLM_TIMEOUT", "600")
+	if got := llmConfig("").Timeout; got != 10*time.Minute {
+		t.Fatalf("llmConfig did not read HODY_LLM_TIMEOUT: %s", got)
 	}
 }

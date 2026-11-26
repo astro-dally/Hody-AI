@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 type answer struct {
@@ -161,5 +164,25 @@ func TestReplayReportsMissingAnswer(t *testing.T) {
 	}
 	if len(r.Missing) != 1 || r.Missing[0] != "fix" {
 		t.Fatalf("missing=%v", r.Missing)
+	}
+}
+
+func TestTimeout(t *testing.T) {
+	c, err := New(Config{BaseURL: "http://127.0.0.1:1", Model: "m"})
+	if err != nil || c.cfg.HTTP.Timeout != DefaultTimeout {
+		t.Fatalf("default timeout: err=%v", err)
+	}
+	slow := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case <-time.After(time.Second):
+		case <-r.Context().Done():
+		}
+	}))
+	defer slow.Close()
+	c, _ = New(Config{BaseURL: slow.URL, Model: "m", Timeout: 50 * time.Millisecond})
+	start := time.Now()
+	_, err = c.Complete(context.Background(), "conclude", []Message{{Role: "user", Content: "x"}})
+	if err == nil || time.Since(start) > 900*time.Millisecond {
+		t.Fatalf("slow model: err=%v after %s, want a timeout after about 50ms", err, time.Since(start))
 	}
 }

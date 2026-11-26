@@ -38,9 +38,14 @@ type Config struct {
 	APIKey    string
 	Model     string
 	Canaries  []string
-	RecordDir string // required in test mode
+	RecordDir string        // required in test mode
+	Timeout   time.Duration // per request; DefaultTimeout if zero
 	HTTP      *http.Client
 }
+
+// DefaultTimeout is how long one model request may take unless
+// Config.Timeout (HODY_LLM_TIMEOUT) says otherwise.
+const DefaultTimeout = 180 * time.Second
 
 // Client talks to one model endpoint. It is not safe for concurrent use;
 // each diagnosis gets its own.
@@ -61,8 +66,11 @@ func New(cfg Config) (*Client, error) {
 	if len(cfg.Canaries) > 0 && cfg.RecordDir == "" {
 		return nil, errors.New("test mode (canaries set) needs a record directory")
 	}
+	if cfg.Timeout <= 0 {
+		cfg.Timeout = DefaultTimeout
+	}
 	if cfg.HTTP == nil {
-		cfg.HTTP = &http.Client{Timeout: 180 * time.Second}
+		cfg.HTTP = &http.Client{Timeout: cfg.Timeout}
 	}
 	return &Client{cfg: cfg}, nil
 }

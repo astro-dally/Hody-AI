@@ -59,6 +59,9 @@ export HODY_LLM_API_KEY=          # leave empty for Ollama
 export HODY_LLM_BASE_URL=https://api.example.com/v1
 export HODY_LLM_MODEL=gpt-4o
 export HODY_LLM_API_KEY=sk-...
+
+# Optional: seconds one model request may take (default 180; raise it for slow local models)
+export HODY_LLM_TIMEOUT=600
 ```
 
 Diagnoses are saved under `~/.hody` (override with `HODY_DATA_DIR`).
@@ -156,13 +159,20 @@ Hody ships with **12 built-in scenarios** covering common failures:
 | `k8s-configmap-key-mismatch` | K8s | Wrong ConfigMap key reference |
 | `k8s-no-findable-cause` | K8s | Abstention (no clear cause) |
 
-Run them all in replay mode:
+Run them all in replay mode (recorded tool output and a scripted model; proves the plumbing and safety checks, not accuracy):
 ```sh
 ./hody eval eval/scenarios
 # 12 of 12 scenarios passed all checks.
 ```
 
-See [eval/README.md](eval/README.md) for how to add your own scenarios.
+Run them live, against real broken containers and pods and a real model. This is the only mode that measures diagnostic accuracy:
+```sh
+kind create cluster                 # for the Kubernetes scenarios
+bash eval/run-live.sh               # one scenario at a time: set up, wait for the failure, diagnose, clean up
+cat eval/results/live-*/summary.md
+```
+
+[docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) walks through a complete live run on an AWS EC2 server, step by step. See [eval/README.md](eval/README.md) for how scenarios work and how to add your own.
 
 ## Security Model
 
@@ -176,7 +186,7 @@ Hody's security is **defense in depth**, not a single barrier:
 - **Independent critic** — a second model call reviews fixes without seeing any log evidence
 - **Web hardening** — localhost-only, Host/Origin validation, CSRF tokens, strict CSP
 
-> These are design goals backed by 66 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
+> These are design goals backed by 73 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
 
 ## Deployment
 
@@ -222,6 +232,7 @@ docs/                  Architecture, usage, security, build report
 | Document | Description |
 |----------|-------------|
 | [docs/USAGE.md](docs/USAGE.md) | Full walkthroughs for Docker & Kubernetes, Ollama setup |
+| [docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) | Step-by-step live evaluation on AWS EC2 with the `scripts/` helpers |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline internals, gateway, layering rules |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model, what's covered, what's not |
 | [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) | Complete build verification & test results |
@@ -235,7 +246,7 @@ docs/                  Architecture, usage, security, build report
 - **Language:** Go 1.26 (stdlib-first, single binary)
 - **Dependencies:** Only `k8s.io/client-go` and its transitive deps — no CLI frameworks, LLM SDKs, or database drivers
 - **AI:** Any OpenAI-compatible API (local or hosted)
-- **Testing:** 66 test functions, table-driven, race-detector clean
+- **Testing:** 73 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
 - **Container:** Distroless non-root image
 
 ## License

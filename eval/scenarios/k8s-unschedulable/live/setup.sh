@@ -4,5 +4,5 @@
 set -e
 d="$(dirname "$0")"
 kubectl apply -f "$d/manifest-1.yaml"
-kubectl -n shop rollout status deploy --timeout=120s || true
+kubectl -n shop rollout status deployment/trainer --timeout=180s
 kubectl apply -f "$d/manifest.yaml"

@@ -35,6 +35,8 @@ Desktop.ini
 
 # ─── Eval outputs ─────────────────────────────────────────────────────────────
 results.json
+# eval/run-live.sh writes here; copy summary.md to docs/LIVE_EVAL.md to keep it
+eval/results/
 
 # ─── Docker ───────────────────────────────────────────────────────────────────
 deploy/*.tar

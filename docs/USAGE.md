@@ -8,6 +8,7 @@ Build Hody (`go build -o hody ./cmd/hody`) and point it at a model:
 export HODY_LLM_BASE_URL=http://localhost:11434/v1
 export HODY_LLM_MODEL=llama3.1
 export HODY_LLM_API_KEY=          # empty for a local model
+export HODY_LLM_TIMEOUT=600       # optional: seconds per model request (default 180)
 ```
 
 ### A local model with Ollama
@@ -21,6 +22,11 @@ export HODY_LLM_API_KEY=          # empty for a local model
 Hody asks for JSON answers (`response_format: json_object`). If a small
 model returns invalid JSON twice in a row, the diagnosis stops with a clear
 error; try a larger model.
+
+Ollama silently cuts off prompts longer than its context window. Hody's
+prompts can run to several thousand tokens, so start Ollama with a larger
+window: `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`. Models on a CPU are
+slow; raise `HODY_LLM_TIMEOUT` (for example to 900) if requests time out.
 
 ## Walkthrough 1: a Docker container
 
@@ -156,7 +162,8 @@ and `kind delete cluster`.
 ./hody serve
 ```
 
-Open http://127.0.0.1:8080, choose Docker or Kubernetes, enter the name
+Open http://127.0.0.1:8080 (with `--addr 127.0.0.1:8081` if the
+`docker-port-conflict` scenario is using port 8080), choose Docker or Kubernetes, enter the name
 (and namespace), and start. The page refreshes until the diagnosis is done,
 then shows the cause, the cited evidence, the diff, the review verdict with
 explanations, any warnings and every tool call, including rejected ones.
@@ -170,21 +177,35 @@ Replay (no Docker, cluster or model needed):
 ```
 
 Live (real systems and a real model). This is the only mode that measures
-diagnostic accuracy:
+diagnostic accuracy. Use a Linux machine (Docker Desktop on a Mac changes
+bind-mount paths and file permissions, which breaks two scenarios):
 
 1. Configure the model as above.
 2. For Docker scenarios, have Docker running. For Kubernetes scenarios,
-   `kind create cluster`.
-3. Set up the scenarios you want to run. Each one has `live/setup.sh`
-   (run it yourself; Hody never creates anything), for example
-   `for s in eval/scenarios/*/live/setup.sh; do sh "$s"; done`.
-   Kubernetes scenarios need a minute to reach their failing state.
-   `k8s-unschedulable` needs nodes smaller than 64Gi of memory, which kind
-   nodes are.
-4. Run `./hody eval eval/scenarios --live`.
-5. Clean up with each scenario's `live/cleanup.sh`.
+   `kind create cluster`. `k8s-unschedulable` needs nodes smaller than
+   64Gi of memory, which kind nodes are.
+3. Rehearse without touching anything: `DRY_RUN=1 bash eval/run-live.sh`.
+4. Run `bash eval/run-live.sh` (or `docker`, `k8s`, or scenario names as
+   arguments). For each scenario it runs `live/setup.sh`, waits until the
+   container or pod has really failed, runs `hody eval --live` on that
+   scenario alone, and runs `live/cleanup.sh`. Hody itself never creates
+   or changes anything; the setup scripts do. The runner refuses any
+   cluster that is not kind, because cleanup deletes the namespace `shop`.
+5. Read `eval/results/live-<time>/summary.md`. The folder also has
+   `results.json`, `env.txt` and, per scenario, `setup.log`, `eval.txt`
+   and `hody/` (sessions, every request sent to the model, audit log).
+   Copy `summary.md` to `docs/LIVE_EVAL.md` to keep it in the repository.
+
+`KEEP=1 bash eval/run-live.sh <scenario>` leaves the failure running so
+you can look at it yourself; clean up with its `live/cleanup.sh`.
+`docs/LIVE_TEST_GUIDE.md` walks through a complete run on an AWS EC2
+server.
 
 The table's accuracy column shows whether the model's category, object and
-field match the label. Live setups differ from the recorded data in small
+field match the label. The category must match exactly (`oom_killed`, not
+`out_of_memory`); object and field are substring matches. The review
+verdict and the number of rejected out-of-scope requests are labelled for
+the scripted answers, so live mode shows them as notes but does not grade
+them. Live setups differ from the recorded data in small
 ways (public images such as `python:3.12-slim` stand in for the fictional
 `shop/...` images), so compare categories more than exact names.

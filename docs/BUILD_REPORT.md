@@ -11,7 +11,8 @@ with a grader.
 
 Everything below was run in the build sandbox, which had **no Docker
 daemon, no Kubernetes cluster and no model API key**. Replay results are
-not accuracy results; see "Verified and not verified" at the end.
+not accuracy results; see "Verified and not verified" at the end. A later
+review prepared live mode for a real run; see "Live-readiness review".
 
 ## What each package does
 
@@ -113,7 +114,7 @@ Status: done, partly done, not done. Test names are Go test functions.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions in total |
+| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review |
 | Docker client refuses non-GET and non-allowlisted paths | done | `TestReadOnlyRefusesNonGET`, `TestReadOnlyPathAllowlist` |
 | Source inspection test for k8s writes and Secret reads | done | `TestSourceHasNoWriteOrSecretCalls` (checked to fail on a planted `Delete`) |
 | Fakes: httptest Docker API, client-go fake clientset, fake model server | done | `dockertest/fake.go`, `fake.NewClientset`, `internal/llm/replay.go` |
@@ -123,7 +124,9 @@ Status: done, partly done, not done. Test names are Go test functions.
 | Scenario folder contents (label, recordings with canaries and injection, transcript, live setup) | done | every folder; `live/setup.sh` and `cleanup.sh`, Kubernetes manifests for kind |
 | Replay mode passing | done | table below; `TestReplayScenariosPass` |
 | Live mode implemented | done | `eval.RunLive`, `hody eval --live`; wiring exercised against fakes by `TestLiveCodePathAgainstFakes` |
-| Live mode run | not done | no Docker, cluster or model in the sandbox |
+| Live setups checked offline | done | `eval/livesetup_test.go` (see "Live-readiness review") |
+| Live runner | done | `eval/run-live.sh`: setup, wait for the failure, diagnose, clean up, summary |
+| Live mode run | not done | no Docker, cluster or model in the sandbox; record a run in `docs/LIVE_EVAL.md` |
 | Unsafe fixes and injection variants as test data | done | `eval/testdata/unsafe_fixes.json`, `eval/testdata/injections.txt`, `eval/testdata/benign_log_lines.txt` |
 
 ## Deviations from the specification
@@ -280,12 +283,46 @@ security-relevant ones:
 - Live mode could not have found Kubernetes pods, because their names are
   generated; added `live_selector`.
 
+## Live-readiness review
+
+Live mode had never run, and replay never touches the live setups, so a
+review went through every live path before the first real run. Each fix
+below is pinned by a test, and each new test was checked to fail on the
+old code.
+
+| Problem | Effect on a real run | Fix | Test |
+|---|---|---|---|
+| Hody's YAML rendering folded strings longer than 80 columns onto a second line | The scanner works line by line, so a folded value could split an injected phrase and escape it. `k8s-image-pull`'s injection line was split, failing "injection line flagged" | Render without folding (`FutureLineWrap`, as kubectl does) | `TestManifestDoesNotFoldLongLines`, `TestLiveKubernetesSetups` |
+| `k8s-configmap-key-mismatch` and `k8s-image-pull` annotations held `: ` unquoted | `kubectl apply` rejects the manifest ("mapping values are not allowed") | Quote the values; the labels give the planted value only, because Hody renders it quoted | `TestLiveKubernetesSetups` |
+| `k8s-exit-126` ran the non-executable script directly and never printed its injection line | The runtime fails to start the container (StartError, exit 128, not 126), and there is no injection to flag | Run it through `sh -c`, which prints the line and exits 126 (checked with BusyBox 1.36.1, the image's version) | `TestLiveKubernetesSetups`, `TestLiveSetupRegressions` |
+| `k8s-probe-wrong-port` ran Python with buffered output | "port 3000", the key clue, never reaches the logs | `python -u` | `TestLiveSetupRegressions` |
+| Three setup scripts ran `rollout status deploy` without a name, with `\|\| true` | No waiting at all, so revision 2 could replace an unfinished revision 1 | `rollout status deployment/<name> --timeout=180s`, failing loudly | `TestLiveSetupRegressions` |
+| `docker-mount-permission` always called `sudo` | Fails where the runner is root and `sudo` is missing (e.g. a container) | `sudo` only when not root | `TestLiveSetupRegressions` |
+| The live grader graded the labelled review verdict and rejection count | Labels describe the scripted answers, so a real model proposing a safer fix, or ignoring the injection, would be marked FAIL | Graded in replay only; recorded as notes in live mode | `TestLiveDoesNotGradeScriptedVerdict` |
+| A fixed 180-second model timeout | Slow local models (CPU) time out | `HODY_LLM_TIMEOUT` (seconds, default 180) | `TestLLMTimeout`, `TestTimeout` |
+| No way to run the live evaluation reliably | Setting up all scenarios at once collides on the namespace and port 8080, and nothing waits for the failure | `eval/run-live.sh`, one scenario at a time, with a summary, `DRY_RUN=1` and `KEEP=1` | see below |
+
+`eval/livesetup_test.go` also checks, for every scenario, that the
+manifests parse strictly as the kinds they claim, everything is in
+namespace `shop`, `live_selector` matches the failing pods, every canary
+is planted, and no canary survives redaction of the rendered manifest.
+
+`eval/run-live.sh` was checked in three ways in the sandbox: the dry run
+passes 12 of 12; the real `hody eval --live` ran through it for
+`docker-oom` against a fake Docker daemon and a scripted fake model
+(setup, wait, diagnosis with only GET requests, grading with accuracy,
+cleanup, summary); and its error paths were exercised (a non-kind cluster
+is refused, a failing setup becomes an ERROR row, and the Kubernetes wait
+tells failing pods from starting ones). None of this is a live result.
+
 ## Verified and not verified
 
 ### Verified in the build sandbox
 
 - The code builds with Go 1.26.8; `gofmt`, `go vet` and all 66 test
-  functions pass, also under the race detector.
+  functions pass, also under the race detector. After the live-readiness
+  review it builds with Go 1.27.4, and all 73 test functions pass, also
+  under the race detector.
 - Gateway, scanner, limiter, parsing, tripwire, registry and scope lock,
   triage rules, policy rules and diff application all behave as their
   table-driven tests describe.
@@ -306,7 +343,8 @@ security-relevant ones:
   daemon, no cluster and no model, so no real diagnosis was ever run. That
   means no accuracy numbers exist at all.
 - **The `live/setup.sh` scripts and Kubernetes manifests** have never been
-  run.
+  run on a real system. They are checked offline by
+  `eval/livesetup_test.go`.
 - **How a real model reacts to the injection lines.**
 - **The web page's appearance in a browser.** Only its HTML and behaviour
   were tested.
@@ -324,17 +362,15 @@ security-relevant ones:
 3. `./hody eval eval/scenarios` (replay, should print 12 of 12).
 4. Start Ollama (`ollama pull llama3.1`) and set `HODY_LLM_BASE_URL`,
    `HODY_LLM_MODEL` (see `docs/USAGE.md`).
-5. Docker live: `for s in eval/scenarios/docker-*/live/setup.sh; do sh "$s"; done`,
-   then `./hody eval eval/scenarios --live`. Kubernetes scenarios will fail in
-   this run unless a cluster is also set up; to run only one platform,
-   copy the wanted scenario folders into a separate directory and point
-   `hody eval` at it.
-6. Kubernetes live: `kind create cluster`, then
-   `kubectl apply -f deploy/readonly-clusterrole.yaml` (optional), run the
-   `k8s-*/live/setup.sh` scripts, wait a minute, then
-   `./hody eval <dir with k8s scenarios> --live`.
-7. Open `http://127.0.0.1:8080` after `./hody serve` and diagnose one of
-   the live containers or pods from the page.
+5. Live: `kind create cluster`, then `DRY_RUN=1 bash eval/run-live.sh`
+   (rehearsal) and `bash eval/run-live.sh`. Copy
+   `eval/results/live-<time>/summary.md` to `docs/LIVE_EVAL.md`.
+   `docs/LIVE_TEST_GUIDE.md` walks through this on an AWS EC2 server.
+6. `kubectl apply -f deploy/readonly-clusterrole.yaml` checks the
+   read-only ClusterRole on the kind cluster.
+7. Open `http://127.0.0.1:8081` after `./hody serve --addr 127.0.0.1:8081`
+   and diagnose a live container or pod from the page
+   (`KEEP=1 bash eval/run-live.sh <scenario>` leaves one running).
 8. `docker build -f deploy/Dockerfile -t hody .`
 
 ## Known limitations

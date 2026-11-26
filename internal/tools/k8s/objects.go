@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	goyaml "go.yaml.in/yaml/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,6 +15,12 @@ import (
 )
 
 const revisionKey = "deployment.kubernetes.io/revision"
+
+// The gateway scans evidence line by line. The YAML encoder behind
+// sigs.k8s.io/yaml folds strings longer than 80 columns onto a second line,
+// which can split an injected phrase so that no single line matches a scan
+// rule. Render every value on one line instead, as kubectl does.
+func init() { goyaml.FutureLineWrap() }
 
 // Deployment renders a Deployment's status and its ReplicaSets.
 func (c *Client) Deployment(ctx context.Context, ns, name string) (string, error) {

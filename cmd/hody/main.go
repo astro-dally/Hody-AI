@@ -22,6 +22,7 @@ Model settings (environment):
   HODY_LLM_BASE_URL   e.g. http://localhost:11434/v1 for Ollama
   HODY_LLM_API_KEY    optional for local models
   HODY_LLM_MODEL      e.g. llama3.1
+  HODY_LLM_TIMEOUT    seconds one model request may take (default 180)
   HODY_DATA_DIR       where sessions and the audit log go (default ~/.hody)
   HODY_CANARIES       test mode: comma-separated canary strings
 `
