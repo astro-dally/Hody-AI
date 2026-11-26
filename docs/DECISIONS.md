@@ -47,8 +47,12 @@ Choices the specification left open, and why.
   generated from `docker inspect`. The diff is against the *redacted* text,
   so it may show `[SECRET_n]` placeholders.
 - **Diff application** is exact on content but tolerates wrong hunk line
-  numbers by searching near the stated line. Only single-file diffs are
-  accepted. A diff that does not apply is blocked, not retried.
+  numbers by searching near the stated line, and indentation that is off
+  by the same number of spaces on every line of a hunk (the new lines are
+  shifted by that amount, so the result keeps the file's real structure;
+  the first live run showed a correct fix blocked for one extra space).
+  Only single-file diffs are accepted. A diff that does not apply is
+  blocked, not retried.
 - **Policy rules match text**, so one rule set covers Kubernetes YAML,
   compose files, Dockerfiles and shell commands. A finding is raised only
   when the patch makes a rule worse: more matches for most rules, fewer

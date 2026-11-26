@@ -19,7 +19,10 @@ type hunk struct {
 // returns the patched text. Each hunk must match the text exactly; its
 // position is searched near the header's line number, after the previous
 // hunk, so slightly wrong line numbers are tolerated but wrong content is
-// not.
+// not. One slip models often make is tolerated: indentation that is off by
+// the same number of spaces on every line of a hunk. Such a hunk is
+// matched with that offset and its new lines are shifted by the same
+// amount, so the result keeps the text's real indentation and structure.
 func Apply(text, diff string) (string, error) {
 	hunks, err := parseDiff(diff)
 	if err != nil {
@@ -29,12 +32,21 @@ func Apply(text, diff string) (string, error) {
 	var out []string
 	cursor := 0
 	for i, h := range hunks {
-		at := find(lines, h.old, cursor, h.start-1)
+		at, added := find(lines, h.old, cursor, h.start-1), h.new
+		if at < 0 {
+			var shift int
+			if at, shift = findShifted(lines, h.old, cursor, h.start-1); at >= 0 {
+				var ok bool
+				if added, ok = reindent(h.new, shift); !ok {
+					at = -1
+				}
+			}
+		}
 		if at < 0 {
 			return "", fmt.Errorf("hunk %d does not match the manifest", i+1)
 		}
 		out = append(out, lines[cursor:at]...)
-		out = append(out, h.new...)
+		out = append(out, added...)
 		cursor = at + len(h.old)
 	}
 	out = append(out, lines[cursor:]...)
@@ -92,6 +104,64 @@ func find(lines, block []string, from, hint int) int {
 		}
 	}
 	return best
+}
+
+// findShifted is find for a block whose indentation differs from the
+// text's by the same non-zero number of spaces on every non-blank line. It
+// returns the position and the shift (text indentation minus block
+// indentation), or -1.
+func findShifted(lines, block []string, from, hint int) (int, int) {
+	best, bestShift := -1, 0
+	for i := from; i+len(block) <= len(lines); i++ {
+		if d, ok := shiftOf(lines[i:i+len(block)], block); ok && d != 0 && (best < 0 || abs(i-hint) < abs(best-hint)) {
+			best, bestShift = i, d
+		}
+	}
+	return best, bestShift
+}
+
+// shiftOf reports the constant indentation difference between text and
+// block, which must otherwise be equal line by line.
+func shiftOf(text, block []string) (int, bool) {
+	d, seen := 0, false
+	for k := range block {
+		t, b := strings.TrimRight(text[k], " \t"), strings.TrimRight(block[k], " \t")
+		if t == "" || b == "" {
+			if t != b {
+				return 0, false
+			}
+			continue
+		}
+		tt, bt := strings.TrimLeft(t, " "), strings.TrimLeft(b, " ")
+		if tt != bt {
+			return 0, false
+		}
+		diff := (len(t) - len(tt)) - (len(b) - len(bt))
+		if seen && diff != d {
+			return 0, false
+		}
+		d, seen = diff, true
+	}
+	return d, seen
+}
+
+// reindent shifts every non-blank line by d spaces (d < 0 removes them).
+// It fails if a line has fewer leading spaces than it should lose.
+func reindent(block []string, d int) ([]string, bool) {
+	out := make([]string, len(block))
+	for i, l := range block {
+		switch {
+		case strings.TrimSpace(l) == "":
+			out[i] = l
+		case d > 0:
+			out[i] = strings.Repeat(" ", d) + l
+		case !strings.HasPrefix(l, strings.Repeat(" ", -d)):
+			return nil, false
+		default:
+			out[i] = l[-d:]
+		}
+	}
+	return out, true
 }
 
 func equal(a, b []string) bool {

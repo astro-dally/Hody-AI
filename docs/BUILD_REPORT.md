@@ -114,7 +114,7 @@ Status: done, partly done, not done. Test names are Go test functions.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 76 after the first live smoke test |
+| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 77 after the live smoke tests |
 | Docker client refuses non-GET and non-allowlisted paths | done | `TestReadOnlyRefusesNonGET`, `TestReadOnlyPathAllowlist` |
 | Source inspection test for k8s writes and Secret reads | done | `TestSourceHasNoWriteOrSecretCalls` (checked to fail on a planted `Delete`) |
 | Fakes: httptest Docker API, client-go fake clientset, fake model server | done | `dockertest/fake.go`, `fake.NewClientset`, `internal/llm/replay.go` |
@@ -330,7 +330,18 @@ no. Reading the session showed three problems in Hody, not the model:
 | object `container` (label `container report-worker`), graded **correct** | The object check also passed when the label merely contained the answer, so a bare kind matched | The object's name must appear in the answer, and the prompt asks for kind and name | `TestObjectMatches` |
 
 The first two make Hody's output consistent; the third makes grading
-stricter. Live results are recorded after these changes.
+stricter.
+
+A second smoke run, on the same code, gave a different answer (as a real
+model does): category and field now matched, but the review blocked a
+correct fix. The critic approved it; the policy check reported
+`patch-does-not-apply`, because the model indented the changed line by one
+space too many. Diff application now tolerates indentation that is off by
+the same number of spaces on every line of a hunk, shifting the new lines
+to the file's real indentation; uneven indentation and different content
+are still refused (`TestApplyToleratesConstantIndentShift`).
+
+Live results are recorded after these changes.
 
 ## Verified and not verified
 
@@ -338,8 +349,8 @@ stricter. Live results are recorded after these changes.
 
 - The code builds with Go 1.26.8; `gofmt`, `go vet` and all 66 test
   functions pass, also under the race detector. After the live-readiness
-  review it builds with Go 1.27.4, and all 73 test functions pass (76
-  after the first live smoke test), also under the race detector.
+  review it builds with Go 1.27.4, and all 73 test functions pass (77
+  after the live smoke tests), also under the race detector.
 - Gateway, scanner, limiter, parsing, tripwire, registry and scope lock,
   triage rules, policy rules and diff application all behave as their
   table-driven tests describe.

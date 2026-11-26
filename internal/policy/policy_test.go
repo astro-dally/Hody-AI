@@ -90,6 +90,40 @@ func TestApply(t *testing.T) {
 	}
 }
 
+// Models often get a diff's indentation wrong by a constant amount. That
+// is tolerated, keeping the manifest's real indentation; anything else is
+// not.
+func TestApplyToleratesConstantIndentShift(t *testing.T) {
+	text := "services:\n  web:\n    image: app:1.0\n    mem_limit: 67108864\n    ports:\n      - \"80:80\"\n"
+	cases := []struct {
+		name, diff, want, err string
+	}{
+		{"one space too many", "--- a/f\n+++ b/f\n@@ -4,1 +4,1 @@\n-     mem_limit: 67108864\n+     mem_limit: 536870912\n",
+			"services:\n  web:\n    image: app:1.0\n    mem_limit: 536870912\n    ports:\n      - \"80:80\"\n", ""},
+		{"two spaces too few, with context and a nested addition", "--- a/f\n+++ b/f\n@@ -3,2 +3,3 @@\n  image: app:1.0\n- mem_limit: 67108864\n+ mem_limit: 536870912\n+ cpus: \"1\"\n",
+			"services:\n  web:\n    image: app:1.0\n    mem_limit: 536870912\n    cpus: \"1\"\n    ports:\n      - \"80:80\"\n", ""},
+		{"exact match is used as is", "--- a/f\n+++ b/f\n@@ -4,1 +4,1 @@\n-    mem_limit: 67108864\n+    mem_limit: 268435456\n",
+			"services:\n  web:\n    image: app:1.0\n    mem_limit: 268435456\n    ports:\n      - \"80:80\"\n", ""},
+		{"uneven shift is refused", "--- a/f\n+++ b/f\n@@ -3,2 +3,2 @@\n       image: app:1.0\n-     mem_limit: 67108864\n+     mem_limit: 1\n", "", "does not match"},
+		{"different content is refused", "--- a/f\n+++ b/f\n@@ -4,1 +4,1 @@\n-     mem_limit: 99\n+     mem_limit: 1\n", "", "does not match"},
+		{"an added line that cannot be dedented is refused", "--- a/f\n+++ b/f\n@@ -4,1 +4,2 @@\n-      mem_limit: 67108864\n+      mem_limit: 536870912\n+ x: 1\n", "", "does not match"},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got, err := Apply(text, c.diff)
+			if c.err != "" {
+				if err == nil || !strings.Contains(err.Error(), c.err) {
+					t.Fatalf("err=%v want %q (got %q)", err, c.err, got)
+				}
+				return
+			}
+			if err != nil || got != c.want {
+				t.Fatalf("got %q err %v, want %q", got, err, c.want)
+			}
+		})
+	}
+}
+
 func TestStricter(t *testing.T) {
 	cases := []struct{ a, b, want string }{
 		{model.VerdictApprove, model.VerdictWarn, model.VerdictWarn},
