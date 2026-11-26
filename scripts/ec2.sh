@@ -32,7 +32,7 @@ install_tools() {
      ! command -v fuser >/dev/null || ! command -v unzip >/dev/null; then
     say "Installing system packages (a few minutes the first time)"
     sudo apt-get update -q
-    sudo DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a \
+    sudo env DEBIAN_FRONTEND=noninteractive NEEDRESTART_MODE=a \
       apt-get install -y -q docker.io git curl python3 unzip tmux gcc psmisc
   fi
   sudo systemctl enable --now docker >/dev/null 2>&1
