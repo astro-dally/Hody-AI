@@ -114,7 +114,7 @@ Status: done, partly done, not done. Test names are Go test functions.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 77 after the live smoke tests |
+| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 78 after the live smoke tests |
 | Docker client refuses non-GET and non-allowlisted paths | done | `TestReadOnlyRefusesNonGET`, `TestReadOnlyPathAllowlist` |
 | Source inspection test for k8s writes and Secret reads | done | `TestSourceHasNoWriteOrSecretCalls` (checked to fail on a planted `Delete`) |
 | Fakes: httptest Docker API, client-go fake clientset, fake model server | done | `dockertest/fake.go`, `fake.NewClientset`, `internal/llm/replay.go` |
@@ -341,6 +341,16 @@ the same number of spaces on every line of a hunk, shifting the new lines
 to the file's real indentation; uneven indentation and different content
 are still refused (`TestApplyToleratesConstantIndentShift`).
 
+A third run stopped at the investigate step after 12 seconds: "model
+answer invalid after retry: missing required fields". The model had
+answered `{"action":"done","reason":"…"}`, a sensible answer (its reason
+even named the right cause), but Hody required `tool` and `args` too, which
+mean nothing for "done"; on the retry the model dropped `reason` instead.
+Only `action` is now always required; a tool request still needs a tool
+name and goes through the registry's usual checks, and unknown fields are
+still rejected (`TestInvestigateAnswerShapes`, which reproduces the
+rejection on the old code).
+
 Live results are recorded after these changes.
 
 ## Verified and not verified
@@ -349,7 +359,7 @@ Live results are recorded after these changes.
 
 - The code builds with Go 1.26.8; `gofmt`, `go vet` and all 66 test
   functions pass, also under the race detector. After the live-readiness
-  review it builds with Go 1.27.4, and all 73 test functions pass (77
+  review it builds with Go 1.27.4, and all 73 test functions pass (78
   after the live smoke tests), also under the race detector.
 - Gateway, scanner, limiter, parsing, tripwire, registry and scope lock,
   triage rules, policy rules and diff application all behave as their

@@ -29,11 +29,15 @@ type triageAnswer struct {
 	} `json:"hypotheses"`
 }
 
+// investigateAnswer: only the action is always required. A tool request
+// needs a tool name (Validate); its arguments are checked by the registry
+// like any other call. "done" needs nothing else: requiring empty tool and
+// args fields there rejected good answers in the first live runs.
 type investigateAnswer struct {
 	Action string            `json:"action"` // request_tool or done
-	Tool   string            `json:"tool"`
-	Args   map[string]string `json:"args"`
-	Reason string            `json:"reason"`
+	Tool   string            `json:"tool,omitempty"`
+	Args   map[string]string `json:"args,omitempty"`
+	Reason string            `json:"reason,omitempty"`
 }
 
 func (a *investigateAnswer) Validate() error {
@@ -128,7 +132,7 @@ var (
 Answer: {"hypotheses":[{"category":"short_snake_case","summary":"one sentence","evidence_ids":["E1"]}]}`
 	investigateTask = `You may request one more read-only tool, or say you are done investigating.
 Requests left: %d. Rejected requests also count. Only the tools listed are available, with arguments exactly as shown.
-Answer: {"action":"request_tool" or "done","tool":"name or empty","args":{"name":"value"},"reason":"why"}`
+Answer either {"action":"request_tool","tool":"name","args":{"name":"value"},"reason":"why"} or {"action":"done","reason":"why"}`
 	concludeTask = `Give the root cause, citing the evidence IDs that show it, or say there is not enough evidence.
 ` + categoryHint + `
 For "object", give the kind and the name of the faulty object, e.g. container cache or deployment/api, never the kind alone.

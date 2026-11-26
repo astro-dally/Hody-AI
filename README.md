@@ -186,7 +186,7 @@ Hody's security is **defense in depth**, not a single barrier:
 - **Independent critic** — a second model call reviews fixes without seeing any log evidence
 - **Web hardening** — localhost-only, Host/Origin validation, CSRF tokens, strict CSP
 
-> These are design goals backed by 77 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
+> These are design goals backed by 78 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
 
 ## Deployment
 
@@ -247,7 +247,7 @@ docs/                  Architecture, usage, security, build report, live test gu
 - **Language:** Go 1.26 (stdlib-first, single binary)
 - **Dependencies:** Only `k8s.io/client-go` and its transitive deps — no CLI frameworks, LLM SDKs, or database drivers
 - **AI:** Any OpenAI-compatible API (local or hosted)
-- **Testing:** 77 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
+- **Testing:** 78 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
 - **Container:** Distroless non-root image
 
 ## License

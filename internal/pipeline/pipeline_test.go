@@ -205,3 +205,29 @@ func TestInvestigateBudgetCountsRejections(t *testing.T) {
 		t.Fatal("rejection reason was not returned to the model")
 	}
 }
+
+// Answers from the first live runs: "done" without tool and args, and
+// without a reason, must be accepted; a tool request still needs a tool,
+// and unknown fields are still rejected.
+func TestInvestigateAnswerShapes(t *testing.T) {
+	cases := []struct {
+		answer string
+		ok     bool
+	}{
+		{`{"action":"done","reason":"Root cause: Memory limit (64MB) is insufficient. Evidence: E1, E3, E4."}`, true},
+		{`{"action":"done"}`, true},
+		{`{"action":"done","tool":"","args":{},"reason":"enough"}`, true},
+		{`{"action":"request_tool","tool":"docker.events","args":{"container":"web"},"reason":"r"}`, true},
+		{`{"action":"request_tool","tool":"docker.events"}`, true},
+		{`{"action":"request_tool","args":{"container":"web"},"reason":"r"}`, false},
+		{`{"action":"maybe"}`, false},
+		{`{"reason":"no action"}`, false},
+		{`{"action":"done","reasoning":"unknown field"}`, false},
+	}
+	for _, c := range cases {
+		var a investigateAnswer
+		if err := llm.Parse(c.answer, &a); (err == nil) != c.ok {
+			t.Errorf("Parse(%s): err=%v, want ok=%v", c.answer, err, c.ok)
+		}
+	}
+}
