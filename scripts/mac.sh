@@ -14,6 +14,9 @@ MODEL=${MODEL:-}
 GPU=${GPU:-}
 GPU_SOCK="/tmp/hody-gpu-$(id -un).sock"
 
+# Use the Mac own curl: a MacPorts or Homebrew copy earlier in PATH may be built for another CPU.
+[ -x /usr/bin/curl ] && curl() { /usr/bin/curl "$@"; }
+
 say()  { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 warn() { printf '\033[1;33m!!  %s\033[0m\n' "$*"; }
 die()  { printf '\n\033[1;31mSTOP: %s\033[0m\n' "$*" >&2; exit 1; }
