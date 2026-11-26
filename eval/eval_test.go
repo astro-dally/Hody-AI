@@ -69,3 +69,26 @@ func TestTableSeparatesReplayFromAccuracy(t *testing.T) {
 		t.Fatal(b.String())
 	}
 }
+
+// A bare kind is not an answer: the object's name must be in it.
+func TestObjectMatches(t *testing.T) {
+	cases := []struct {
+		want, got string
+		ok        bool
+	}{
+		{"container report-worker", "container report-worker", true},
+		{"container report-worker", "report-worker", true},
+		{"container report-worker", "Container Report-Worker", true},
+		{"container report-worker", "container", false},
+		{"container report-worker", "", false},
+		{"deployment/web", "deployment/web", true},
+		{"deployment/web", "Deployment web (shop)", true},
+		{"deployment/web", "deployment", false},
+		{"", "anything", true},
+	}
+	for _, c := range cases {
+		if got := objectMatches(c.want, c.got); got != c.ok {
+			t.Errorf("objectMatches(%q, %q) = %v, want %v", c.want, c.got, got, c.ok)
+		}
+	}
+}

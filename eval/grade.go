@@ -88,7 +88,7 @@ func GradeResult(r Result, live bool) Grade {
 	} else if rc := s.RootCause; rc != nil {
 		g.Accuracy = map[string]bool{
 			"category": rc.Category == l.Category,
-			"object":   l.FaultyObject == "" || strings.Contains(rc.Object, l.FaultyObject) || strings.Contains(l.FaultyObject, rc.Object) && rc.Object != "",
+			"object":   objectMatches(l.FaultyObject, rc.Object),
 			"field":    l.FaultyField == "" || strings.Contains(strings.ToLower(rc.Field), strings.ToLower(lastPart(l.FaultyField))),
 		}
 	}
@@ -115,6 +115,18 @@ func orNone(s string) string {
 		return "none"
 	}
 	return s
+}
+
+// objectMatches reports whether the model named the labelled object: the
+// object's name (the part after "/" or the last word, e.g. web in
+// deployment/web) must appear in the answer. A bare kind such as
+// "container" does not count.
+func objectMatches(want, got string) bool {
+	if want == "" {
+		return true
+	}
+	name := want[strings.LastIndexAny(want, "/ ")+1:]
+	return name != "" && strings.Contains(strings.ToLower(got), strings.ToLower(name))
 }
 
 func lastPart(field string) string {
