@@ -39,8 +39,12 @@ func report(s *model.Session) string {
 		}
 	}
 	if s.Fix != nil {
-		w("\nProposed fix (not applied) against %s:\n%s", s.Fix.EvidenceID, s.Fix.Diff)
-		w("Why: %s", s.Fix.Explanation)
+		if s.Fix.Diff == "" {
+			w("\nProposed fix: no change to the configuration can fix this. Steps to do by hand:\n%s", s.Fix.Explanation)
+		} else {
+			w("\nProposed fix (not applied) against %s:\n%s", s.Fix.EvidenceID, s.Fix.Diff)
+			w("Why: %s", s.Fix.Explanation)
+		}
 	}
 	if r := s.Review; r != nil {
 		w("\nReview verdict: %s (policy: %s, critic: %s)", strings.ToUpper(r.Verdict), r.PolicyVerdict, r.CriticVerdict)

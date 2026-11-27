@@ -124,6 +124,22 @@ func TestApplyToleratesConstantIndentShift(t *testing.T) {
 	}
 }
 
+// From the first full live run: the model wrote the context lines without
+// their leading space marker, so they were one space short.
+func TestApplyToleratesMissingContextMarker(t *testing.T) {
+	text := "        resources:\n          limits:\n            memory: 64Mi\n          requests:\n            memory: 64Mi\n"
+	diff := "--- a/file\n+++ b/file\n@@ -33,4 +33,4 @@\n          limits:\n-            memory: 64Mi\n+            memory: 200Mi\n          requests:"
+	got, err := Apply(text, diff)
+	want := "        resources:\n          limits:\n            memory: 200Mi\n          requests:\n            memory: 64Mi\n"
+	if err != nil || got != want {
+		t.Fatalf("got %q err %v", got, err)
+	}
+	// Different content is still refused.
+	if _, err := Apply(text, strings.Replace(diff, "requests:", "limits:", 1)); err == nil {
+		t.Fatal("a context line that does not exist was accepted")
+	}
+}
+
 func TestStricter(t *testing.T) {
 	cases := []struct{ a, b, want string }{
 		{model.VerdictApprove, model.VerdictWarn, model.VerdictWarn},

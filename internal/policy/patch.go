@@ -13,6 +13,10 @@ var hunkRE = regexp.MustCompile(`^@@ -(\d+)(?:,\d+)? \+\d+(?:,\d+)? @@`)
 type hunk struct {
 	start    int // 1-based line in the original, from the header
 	old, new []string
+	// The same lines read as if the context lines had lost their leading
+	// space marker, a common slip in model-written diffs: the space is
+	// kept as part of the line.
+	oldRaw, newRaw []string
 }
 
 // Apply applies a unified diff for a single file to text, in memory, and
@@ -23,6 +27,8 @@ type hunk struct {
 // the same number of spaces on every line of a hunk. Such a hunk is
 // matched with that offset and its new lines are shifted by the same
 // amount, so the result keeps the text's real indentation and structure.
+// Another is tolerated too: context lines written without their leading
+// space marker, so that they are one space short of the changed lines.
 func Apply(text, diff string) (string, error) {
 	hunks, err := parseDiff(diff)
 	if err != nil {
@@ -32,15 +38,9 @@ func Apply(text, diff string) (string, error) {
 	var out []string
 	cursor := 0
 	for i, h := range hunks {
-		at, added := find(lines, h.old, cursor, h.start-1), h.new
-		if at < 0 {
-			var shift int
-			if at, shift = findShifted(lines, h.old, cursor, h.start-1); at >= 0 {
-				var ok bool
-				if added, ok = reindent(h.new, shift); !ok {
-					at = -1
-				}
-			}
+		at, added := match(lines, h.old, h.new, cursor, h.start-1)
+		if at < 0 && !equal(h.old, h.oldRaw) {
+			at, added = match(lines, h.oldRaw, h.newRaw, cursor, h.start-1)
 		}
 		if at < 0 {
 			return "", fmt.Errorf("hunk %d does not match the manifest", i+1)
@@ -104,6 +104,23 @@ func find(lines, block []string, from, hint int) int {
 		}
 	}
 	return best
+}
+
+// match finds old in lines, exactly or with a constant indentation shift,
+// and returns its position and new shifted to match, or -1.
+func match(lines, old, new []string, from, hint int) (int, []string) {
+	if at := find(lines, old, from, hint); at >= 0 {
+		return at, new
+	}
+	at, shift := findShifted(lines, old, from, hint)
+	if at < 0 {
+		return -1, nil
+	}
+	shifted, ok := reindent(new, shift)
+	if !ok {
+		return -1, nil
+	}
+	return at, shifted
 }
 
 // findShifted is find for a block whose indentation differs from the
@@ -190,10 +207,11 @@ func addLine(h *hunk, line string) error {
 	switch mark {
 	case ' ':
 		h.old, h.new = append(h.old, body), append(h.new, body)
+		h.oldRaw, h.newRaw = append(h.oldRaw, line), append(h.newRaw, line)
 	case '-':
-		h.old = append(h.old, body)
+		h.old, h.oldRaw = append(h.old, body), append(h.oldRaw, body)
 	case '+':
-		h.new = append(h.new, body)
+		h.new, h.newRaw = append(h.new, body), append(h.newRaw, body)
 	default:
 		return fmt.Errorf("unexpected diff line %q", line)
 	}

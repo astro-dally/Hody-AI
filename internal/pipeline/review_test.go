@@ -62,3 +62,29 @@ func TestCriticSeesOnlyCauseAndDiff(t *testing.T) {
 		t.Fatalf("verdict %s", s.Review.Verdict)
 	}
 }
+
+// From the first full live run: the cause was on the host, and the model
+// rightly said no change to the manifest could fix it. That answer must be
+// accepted, warned about, and judged by the critic on its steps.
+func TestFixOutsideManifest(t *testing.T) {
+	steps := "The host folder /tmp/data belongs to root. Give user 1000 write access to it on the host."
+	manual := answer("fix", map[string]any{"diff": "", "explanation": steps})
+	e, srv := harness(t, "exitCode=137", done(), cause("E1"), manual, critic("approve"))
+	s := NewSession(target)
+	if err := e.Run(context.Background(), s); err != nil {
+		t.Fatal(err)
+	}
+	if s.Fix == nil || s.Fix.Diff != "" || s.Review == nil || s.Review.Verdict != "warn" ||
+		len(s.Review.Findings) != 1 || s.Review.Findings[0].Rule != "fix-outside-manifest" {
+		t.Fatalf("fix %+v review %+v", s.Fix, s.Review)
+	}
+	if last := string(srv.Bodies[len(srv.Bodies)-1]); !strings.Contains(last, "PROPOSED MANUAL STEPS") || !strings.Contains(last, "/tmp/data belongs to root") {
+		t.Fatalf("critic did not see the manual steps: %s", last)
+	}
+	for _, bad := range []string{`{"diff":"","explanation":""}`, `{"diff":"insufficient_evidence","explanation":"x"}`} {
+		var a fixAnswer
+		if llm.Parse(bad, &a) == nil {
+			t.Errorf("accepted %s", bad)
+		}
+	}
+}

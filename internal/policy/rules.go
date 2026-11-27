@@ -110,6 +110,15 @@ func NotApplied(reason string) model.Finding {
 		Alternative: "Ask for the diagnosis again, or make the change by hand after reading the explanation."}
 }
 
+// ManualFix is the finding for a fix that changes nothing in the manifest:
+// the cause lies elsewhere (e.g. on the host), so the rules cannot check
+// it and a person must read the steps.
+func ManualFix() model.Finding {
+	return model.Finding{Rule: "fix-outside-manifest", Severity: model.VerdictWarn,
+		Risk:        "No change to the manifest can fix this, so Hody's rules cannot check the fix. It is a list of steps to do by hand.",
+		Alternative: "Read each step and make sure you understand it before doing it."}
+}
+
 // Verdict is the strictest severity among findings, or approve.
 func Verdict(findings []model.Finding) string {
 	v := model.VerdictApprove

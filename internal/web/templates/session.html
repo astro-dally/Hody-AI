@@ -20,8 +20,8 @@ Policy rules said {{.PolicyVerdict}}; the separate critic said {{.CriticVerdict}
 
 {{with .Fix}}
 <h2>Proposed fix</h2>
-<p>Not applied. Review it, then make the change yourself if you agree. Diff against evidence {{.EvidenceID}}:</p>
-<pre>{{.Diff}}</pre>
+{{if .Diff}}<p>Not applied. Review it, then make the change yourself if you agree. Diff against evidence {{.EvidenceID}}:</p>
+<pre>{{.Diff}}</pre>{{else}}<p>No change to the configuration can fix this. Steps to do by hand:</p>{{end}}
 <p>{{.Explanation}}</p>
 {{if .ApplyError}}<p class="error">The diff does not apply: {{.ApplyError}}</p>{{end}}
 {{end}}

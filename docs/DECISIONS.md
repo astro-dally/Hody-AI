@@ -50,7 +50,11 @@ Choices the specification left open, and why.
   numbers by searching near the stated line, and indentation that is off
   by the same number of spaces on every line of a hunk (the new lines are
   shifted by that amount, so the result keeps the file's real structure;
-  the first live run showed a correct fix blocked for one extra space).
+  the first live run showed a correct fix blocked for one extra space), and
+  context lines written without their leading space marker. A fix may
+  also have no diff when no change to the manifest can fix the cause
+  (e.g. host file ownership): its manual steps get a warning and the
+  critic's review, since the rules cannot check them.
   Only single-file diffs are accepted. A diff that does not apply is
   blocked, not retried.
 - **Policy rules match text**, so one rule set covers Kubernetes YAML,

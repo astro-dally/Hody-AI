@@ -41,17 +41,23 @@ func TestLiveKubernetesSetups(t *testing.T) {
 				t.Fatal("no live/manifest*.yaml")
 			}
 			var dep *appsv1.Deployment
+			var scripts []string // ConfigMap values, e.g. a mounted start script
 			planted := readFile(t, filepath.Join(sc.Dir, "live", "setup.sh"))
 			for _, f := range files {
 				text := readFile(t, f)
 				planted += text
 				for i, doc := range strings.Split(text, "\n---\n") {
-					d, err := parseObject(doc)
+					d, cm, err := parseObject(doc)
 					if err != nil {
 						t.Fatalf("%s, document %d: %v", filepath.Base(f), i+1, err)
 					}
 					if d != nil && filepath.Base(f) == "manifest.yaml" {
 						dep = d
+					}
+					if cm != nil {
+						for _, v := range cm.Data {
+							scripts = append(scripts, v)
+						}
 					}
 				}
 			}
@@ -82,8 +88,11 @@ func TestLiveKubernetesSetups(t *testing.T) {
 			for _, ct := range dep.Spec.Template.Spec.Containers {
 				printed = printed || strings.Contains(strings.Join(append(ct.Command, ct.Args...), " "), l.InjectionLine)
 			}
+			for _, sh := range scripts {
+				printed = printed || strings.Contains(sh, "echo '"+l.InjectionLine+"'")
+			}
 			if !printed {
-				t.Fatalf("injection line %q is neither in the manifest as Hody renders it nor printed by a container.\nRendered manifest:\n%s", l.InjectionLine, manifest)
+				t.Fatalf("injection line %q is neither in the manifest as Hody renders it nor printed by a container or its script.\nRendered manifest:\n%s", l.InjectionLine, manifest)
 			}
 			if !flagged(gateway.New().Process("k8s.logs", nil, l.InjectionLine+"\n"), l.InjectionLine) {
 				t.Fatalf("the scanner does not flag the injection line %q", l.InjectionLine)
@@ -152,6 +161,15 @@ func TestLiveSetupRegressions(t *testing.T) {
 		}
 	}
 
+	// The abstention scenario must not show why it exits: in the first full
+	// live run the command ended in a visible "exit 1", which the model
+	// reported as the cause. The exit lives in a ConfigMap script, whose
+	// values Hody never reads.
+	dep = finalDeployment(t, "k8s-no-findable-cause")
+	if run := strings.Join(append(dep.Spec.Template.Spec.Containers[0].Command, dep.Spec.Template.Spec.Containers[0].Args...), " "); strings.Contains(run, "exit") {
+		t.Errorf("k8s-no-findable-cause: the command shows why it exits: %s", run)
+	}
+
 	// Python buffers stdout when it is not a terminal; the "port 3000" line
 	// must reach the logs.
 	dep = finalDeployment(t, "k8s-probe-wrong-port")
@@ -186,44 +204,45 @@ func readFile(t *testing.T, path string) string {
 }
 
 // parseObject parses one manifest document strictly as its kind, checks it
-// is in namespace shop, and returns it if it is a Deployment.
-func parseObject(doc string) (*appsv1.Deployment, error) {
+// is in namespace shop, and returns it if it is a Deployment or ConfigMap.
+func parseObject(doc string) (*appsv1.Deployment, *corev1.ConfigMap, error) {
 	var head struct {
 		APIVersion string            `json:"apiVersion"`
 		Kind       string            `json:"kind"`
 		Metadata   metav1.ObjectMeta `json:"metadata"`
 	}
 	if err := yaml.Unmarshal([]byte(doc), &head); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var obj any
 	switch head.Kind {
 	case "Namespace":
 		obj = &corev1.Namespace{}
 		if head.Metadata.Name != "shop" {
-			return nil, fmt.Errorf("namespace %q, want shop (cleanup deletes shop)", head.Metadata.Name)
+			return nil, nil, fmt.Errorf("namespace %q, want shop (cleanup deletes shop)", head.Metadata.Name)
 		}
 	case "ConfigMap":
 		obj = &corev1.ConfigMap{}
 	case "Deployment":
 		obj = &appsv1.Deployment{}
 	default:
-		return nil, fmt.Errorf("unexpected kind %q", head.Kind)
+		return nil, nil, fmt.Errorf("unexpected kind %q", head.Kind)
 	}
 	if head.Kind != "Namespace" && head.Metadata.Namespace != "shop" {
-		return nil, fmt.Errorf("%s %s is in namespace %q, want shop", head.Kind, head.Metadata.Name, head.Metadata.Namespace)
+		return nil, nil, fmt.Errorf("%s %s is in namespace %q, want shop", head.Kind, head.Metadata.Name, head.Metadata.Namespace)
 	}
 	if err := yaml.UnmarshalStrict([]byte(doc), obj); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	d, _ := obj.(*appsv1.Deployment)
-	return d, nil
+	cm, _ := obj.(*corev1.ConfigMap)
+	return d, cm, nil
 }
 
 func finalDeployment(t *testing.T, name string) *appsv1.Deployment {
 	t.Helper()
 	for _, doc := range strings.Split(readFile(t, filepath.Join("scenarios", name, "live", "manifest.yaml")), "\n---\n") {
-		if d, err := parseObject(doc); err != nil {
+		if d, _, err := parseObject(doc); err != nil {
 			t.Fatalf("%s: %v", name, err)
 		} else if d != nil {
 			return d
