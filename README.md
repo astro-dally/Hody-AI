@@ -172,6 +172,8 @@ bash eval/run-live.sh               # one scenario at a time: set up, wait for t
 cat eval/results/live-*/summary.md
 ```
 
+**Recorded live result** ([docs/LIVE_EVAL.md](docs/LIVE_EVAL.md), qwen3:32b, real Docker and Kubernetes): 10 of 12 scenarios passed every check; category, object and field each right in 10 of 11; no planted secret in any of the 53 requests sent to the model; all 12 injection lines flagged; and Hody's diff check blocked 7 malformed fixes, 6 of which the LLM critic had approved. [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) explains every result, including what failed.
+
 [docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) walks through a complete live run on an AWS EC2 server, step by step. See [eval/README.md](eval/README.md) for how scenarios work and how to add your own.
 
 ## Security Model
@@ -234,6 +236,7 @@ docs/                  Architecture, usage, security, build report, live test gu
 |----------|-------------|
 | [docs/USAGE.md](docs/USAGE.md) | Full walkthroughs for Docker & Kubernetes, Ollama setup |
 | [docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) | Step-by-step live evaluation on AWS EC2 with the `scripts/` helpers |
+| [docs/LIVE_EVAL.md](docs/LIVE_EVAL.md) | The recorded live run; earlier runs in `docs/live-runs/` |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline internals, gateway, layering rules |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model, what's covered, what's not |
 | [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) | Complete build verification & test results |
