@@ -50,6 +50,32 @@ done
 
 # ── Checks before touching anything ─────────────────────────────────────────
 command -v python3 >/dev/null || die "python3 is needed"
+
+# model_ok: the endpoint answers and lists HODY_LLM_MODEL. Checked before
+# every live scenario, so a model that disappears mid-run stops the run
+# instead of failing every remaining scenario.
+model_problem=""
+model_ok() {
+  local out
+  out=$(curl -sS --max-time 20 ${HODY_LLM_API_KEY:+-H "Authorization: Bearer $HODY_LLM_API_KEY"} \
+    -w '\n%{http_code}' "${HODY_LLM_BASE_URL%/}/models" 2>&1)
+  model_problem=$(printf '%s' "$out" | python3 -c '
+import json, sys
+text = sys.stdin.read().rsplit("\n", 1)
+body, code = (text + [""])[:2] if len(text) == 2 else (text[0], "")
+model = sys.argv[1]
+try:
+    d = json.loads(body)
+except ValueError:
+    print("no answer (HTTP %s): %s" % (code or "?", body.strip()[:200])); sys.exit()
+if code != "200":
+    print("HTTP %s: %s" % (code, (d.get("error") if isinstance(d, dict) else "") or body.strip()[:200])); sys.exit()
+ids = [m.get("id") for m in d.get("data", []) if isinstance(m, dict)]
+if model not in ids:
+    print("model %s is not listed (have: %s)" % (model, ", ".join(i for i in ids if i) or "none"))
+' "${HODY_LLM_MODEL:-}")
+  [ -z "$model_problem" ]
+}
 if [ -z "${HODY_BIN:-}" ]; then
   if command -v go >/dev/null; then
     say "Building hody"
@@ -59,8 +85,7 @@ fi
 [ -x "$HODY" ] || die "no hody binary at $HODY; run: go build -o hody ./cmd/hody"
 if [ -z "$DRY_RUN" ]; then
   [ -n "${HODY_LLM_BASE_URL:-}" ] && [ -n "${HODY_LLM_MODEL:-}" ] || die "set HODY_LLM_BASE_URL and HODY_LLM_MODEL first"
-  curl -fsS --max-time 15 ${HODY_LLM_API_KEY:+-H "Authorization: Bearer $HODY_LLM_API_KEY"} \
-    "${HODY_LLM_BASE_URL%/}/models" >/dev/null || die "cannot reach the model at $HODY_LLM_BASE_URL"
+  model_ok || die "cannot reach the model at $HODY_LLM_BASE_URL: $model_problem"
   if [ -n "$need_docker" ]; then docker info >/dev/null 2>&1 || die "cannot talk to Docker"; fi
   if [ -n "$need_k8s" ]; then
     ctx=$(kubectl config current-context 2>/dev/null) || die "no current kubectl context; run: kind create cluster"
@@ -182,7 +207,7 @@ if [ -z "$DRY_RUN" ] && [ -n "$need_k8s" ] && kubectl get namespace shop >/dev/n
   kubectl delete namespace shop --wait=false >/dev/null; namespace_gone || die "namespace shop would not go away"
 fi
 
-n=${#picked[@]}; i=0
+n=${#picked[@]}; i=0; stopped=""
 for name in "${picked[@]}"; do
   i=$((i + 1))
   platform=$(label "$name" target.platform)
@@ -191,6 +216,13 @@ for name in "${picked[@]}"; do
   current=$name; current_platform=$platform
   status=ok; error=""; t0=$(date +%s); setup_s=0
   say "[$i/$n] $name"
+  if [ -z "$DRY_RUN" ] && ! model_ok; then
+    echo "   STOPPING: the model is no longer available: $model_problem" >&2
+    echo "   Fix that, then run the remaining scenarios again." >&2
+    rm -rf "$out"
+    stopped="model unavailable before $name: $model_problem"
+    break
+  fi
 
   if [ -z "$DRY_RUN" ]; then
     echo "   setting up the failure"
@@ -233,9 +265,10 @@ for name in "${picked[@]}"; do
 done
 
 # ── Summary ─────────────────────────────────────────────────────────────────
-python3 - "$RES" "${picked[@]}" <<'PYEOF'
+STOPPED="$stopped" python3 - "$RES" "${picked[@]}" <<'PYEOF'
 import json, os, re, sys
 res, names = sys.argv[1], sys.argv[2:]
+stopped = os.environ.get("STOPPED", "")
 env = open(os.path.join(res, "env.txt")).read()
 dry = "mode: dry run" in env
 rows, combined = [], []
@@ -268,6 +301,8 @@ lines.append("%s · %s · Hody commit `%s` · %d scenario%s (%d Docker, %d Kuber
     date.group(1) if date else "?", "model `%s`" % model.group(1) if model else "scripted model (replay)",
     commit.group(1) if commit else "?", len(rows), "" if len(rows) == 1 else "s", docker, len(rows) - docker))
 lines += ["", "**%d of %d scenarios passed all checks.**" % (passed, len(rows)), ""]
+if stopped:
+    lines += ["**The run stopped early (%s); %d of %d scenarios ran.**" % (stopped, len(rows), len(names)), ""]
 
 # Accuracy: every scenario labelled with a cause counts; a run that failed or
 # abstained there is a miss.

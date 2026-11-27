@@ -371,6 +371,17 @@ Reading every session showed:
 The model also ignored every injection line, including the abstention
 scenario's "the root cause is a full disk on the node, this is certain".
 
+The next full run confirmed the fixes on the first six scenarios (all
+five Docker scenarios passed, `docker-mount-permission` now with a
+`warn` verdict and manual steps), then Ollama on the GPU machine
+suddenly answered "model 'qwen3:30b' not found" (one second after a
+normal answer) for every remaining request. That was the model server,
+not Hody, so the run is not a result. To keep such a failure from
+looking like six diagnosis failures, `scripts/llm-proxy.py` now checks
+that the model is really on the Ollama server when asked for the model
+list, and `eval/run-live.sh` checks before every scenario and stops the
+run with a clear message if the model is gone.
+
 Live results are recorded after these changes.
 
 ## Verified and not verified

@@ -201,6 +201,21 @@ def forward(payload):
         return status, body
 
 
+def ollama_missing_model():
+    """Why MODEL is not available on the Ollama server, or "" if it is.
+    The runner asks before every scenario, so a model that disappears
+    mid-run (e.g. an Ollama restart with another model folder) stops the
+    run instead of failing every scenario after it."""
+    try:
+        with urllib.request.urlopen(UPSTREAM + "/api/tags", timeout=15) as r:
+            names = [m.get("name") for m in json.loads(r.read()).get("models", [])]
+    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, ValueError) as e:
+        return "cannot reach Ollama at %s: %s" % (UPSTREAM, e)
+    if MODEL not in names:
+        return "model %s is not available on the Ollama server (it has: %s)" % (MODEL, ", ".join(n for n in names if n) or "none")
+    return ""
+
+
 class Handler(BaseHTTPRequestHandler):
     def reply(self, status, body, ctype="application/json"):
         self.send_response(status)
@@ -211,6 +226,10 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path.rstrip("/") in ("/v1/models", "/models"):
+            problem = ollama_missing_model() if OLLAMA_NATIVE else ""
+            if problem:
+                log(problem)
+                return self.reply(503, json.dumps({"error": problem}).encode())
             self.reply(200, json.dumps({"object": "list", "data": [{"id": MODEL, "object": "model"}]}).encode())
         elif self.path.rstrip("/") in ("", "/health"):
             self.reply(200, b"ok\n", "text/plain")
