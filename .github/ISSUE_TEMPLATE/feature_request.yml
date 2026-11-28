@@ -1,0 +1,21 @@
+name: Feature request
+description: An idea to make Hody more useful
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What were you trying to do, and what got in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+  - type: checkboxes
+    id: readonly
+    attributes:
+      label: Hody's rules
+      options:
+        - label: This keeps Hody read-only (it never changes containers, clusters or images)

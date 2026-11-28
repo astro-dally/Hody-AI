@@ -4,6 +4,12 @@
     <strong>AI-powered container failure diagnosis that keeps your secrets safe.</strong>
   </p>
   <p align="center">
+    <a href="https://github.com/astro-dally/Hody-AI/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/astro-dally/Hody-AI/actions/workflows/ci.yml/badge.svg"></a>
+    <a href="https://github.com/astro-dally/Hody-AI/releases"><img alt="Release" src="https://img.shields.io/github/v/release/astro-dally/Hody-AI?sort=semver"></a>
+    <a href="go.mod"><img alt="Go version" src="https://img.shields.io/github/go-mod/go-version/astro-dally/Hody-AI"></a>
+    <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/github/license/astro-dally/Hody-AI"></a>
+  </p>
+  <p align="center">
     <a href="#quick-start">Quick Start</a> •
     <a href="#how-it-works">How It Works</a> •
     <a href="docs/USAGE.md">Walkthroughs</a> •
@@ -32,32 +38,56 @@ When a container crashes, it's tempting to paste logs into a chatbot. But those 
 
 | Requirement | Details |
 |-------------|---------|
-| **Go** | 1.26+ ([install](https://go.dev/doc/install)) |
-| **Container runtime** | Docker (for Docker diagnoses) or a Kubernetes cluster (for K8s diagnoses). [kind](https://kind.sigs.k8s.io/) works great for testing |
-| **AI model** | Any OpenAI-compatible API. Free local models via [Ollama](https://ollama.com/) work perfectly |
+| **Container runtime** | Docker (for Docker diagnoses) or a Kubernetes cluster (for K8s diagnoses). [kind](https://kind.sigs.k8s.io/) works well for testing |
+| **AI model** | Any OpenAI-compatible API, including free local models through [Ollama](https://ollama.com/). The live evaluation used `qwen3:32b` and `qwen3:30b`; smaller models are untested |
+| **Go** | 1.26+, only to build from source ([install](https://go.dev/doc/install)) |
 
 ## Quick Start
 
-### Build
+### Install
+
+**macOS (Homebrew):**
+```sh
+brew install astro-dally/tap/hody
+```
+
+If macOS ever says it "cannot verify" hody (the binaries are not notarised
+by Apple), run `xattr -dr com.apple.quarantine "$(which hody)"` once.
+
+**macOS, Linux or Windows (download):** pick your platform on the
+[Releases page](https://github.com/astro-dally/Hody-AI/releases), check
+the file against `checksums.txt`, unpack it, and put `hody` on your PATH.
+
+**Container image** (mainly for Kubernetes and CI; see [Deployment](#deployment)):
+```sh
+docker pull ghcr.io/astro-dally/hody
+```
+
+**From source:**
+```sh
+git clone https://github.com/astro-dally/Hody-AI.git && cd Hody-AI
+go build -o hody ./cmd/hody
+```
+
+### First run
 
 ```sh
-git clone https://github.com/astro-dally/Hody-AI.git
-cd Hody-AI
-go build -o hody ./cmd/hody
-go test ./...
+hody            # says hello and lists the commands
+hody doctor     # checks Docker, Kubernetes and the AI model, and says what to fix
 ```
 
 ### Configure the model
 
 ```sh
-# Local model with Ollama (free)
+# Local model with Ollama (free; start it with OLLAMA_CONTEXT_LENGTH=16384 ollama serve)
+ollama pull qwen3:32b
 export HODY_LLM_BASE_URL=http://localhost:11434/v1
-export HODY_LLM_MODEL=llama3.1
+export HODY_LLM_MODEL=qwen3:32b
 export HODY_LLM_API_KEY=          # leave empty for Ollama
 
 # Or any OpenAI-compatible hosted API
 export HODY_LLM_BASE_URL=https://api.example.com/v1
-export HODY_LLM_MODEL=gpt-4o
+export HODY_LLM_MODEL=your-model
 export HODY_LLM_API_KEY=sk-...
 
 # Optional: seconds one model request may take (default 180; raise it for slow local models)
@@ -70,25 +100,25 @@ Diagnoses are saved under `~/.hody` (override with `HODY_DATA_DIR`).
 
 **Docker container:**
 ```sh
-./hody diagnose docker my-container
+hody diagnose docker my-container
 ```
 
 **Kubernetes pod:**
 ```sh
-./hody diagnose k8s pod/api-7d9f8b6c5d-x2k9p -n shop
+hody diagnose k8s pod/api-7d9f8b6c5d-x2k9p -n shop
 ```
 
 **Web UI** (localhost only):
 ```sh
-./hody serve            # → http://127.0.0.1:8080
+hody serve            # → http://127.0.0.1:8080
 ```
 
-**Replay mode** (no Docker, cluster, or model needed):
+**Replay mode** (no Docker, cluster, or model needed; from a clone of the repo):
 ```sh
-./hody eval eval/scenarios
+hody eval eval/scenarios
 ```
 
-> Add `--file path/to/deployment.yaml` to get fixes against your own manifest instead of the live object.
+> Add `--file path/to/deployment.yaml` to get fixes against your own manifest instead of the live object. Every command has `--help`.
 
 ## How It Works
 
@@ -188,31 +218,45 @@ Hody's security is **defense in depth**, not a single barrier:
 - **Independent critic** — a second model call reviews fixes without seeing any log evidence
 - **Web hardening** — localhost-only, Host/Origin validation, CSRF tokens, strict CSP
 
-> These are design goals backed by 93 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
+> These are design goals backed by 99 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
 
 ## Deployment
 
-### Docker
+### Container image
 
 ```sh
-docker build -f deploy/Dockerfile -t hody .
 docker run --rm \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  -v /var/run/docker.sock:/var/run/docker.sock \
   -e HODY_LLM_BASE_URL -e HODY_LLM_API_KEY -e HODY_LLM_MODEL \
-  hody diagnose docker <container>
+  ghcr.io/astro-dally/hody diagnose docker <container>
 ```
+
+Be aware of what the socket mount means: whoever holds Docker's socket
+controls Docker, and adding `:ro` does not change that (it makes the
+socket file read-only, not the Docker API). Hody's own client only sends
+GET requests to an allowlist of paths, which is enforced and tested, but
+on your own machine the installed binary is the simpler, safer choice.
+The image suits Kubernetes and CI, where it needs no socket at all.
 
 ### Kubernetes RBAC
 
-Apply the minimal read-only ClusterRole:
+Apply the minimal read-only ClusterRole, then bind it in each namespace
+Hody may read:
 ```sh
 kubectl apply -f deploy/readonly-clusterrole.yaml
+bash deploy/check-readonly-rbac.sh   # on a throwaway cluster: checks it allows reads and nothing else
 ```
+CI runs that check on a kind cluster for every push.
+
+### Releases
+
+Tagging `v*` builds and publishes everything; see
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## Project Structure
 
 ```
-cmd/hody/              CLI commands (serve, diagnose, eval, report)
+cmd/hody/              CLI commands (serve, diagnose, doctor, eval, version, report)
 internal/
 ├── model/             Data types (Session, Evidence, RootCause, etc.)
 ├── gateway/           Redact → Scan → Limit → Number → Wrap
@@ -237,6 +281,8 @@ docs/                  Architecture, usage, security, build report, live test gu
 | [docs/USAGE.md](docs/USAGE.md) | Full walkthroughs for Docker & Kubernetes, Ollama setup |
 | [docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) | Step-by-step live evaluation on AWS EC2 with the `scripts/` helpers |
 | [docs/LIVE_EVAL.md](docs/LIVE_EVAL.md) | The recorded live run; earlier runs in `docs/live-runs/` |
+| [docs/RELEASING.md](docs/RELEASING.md) | How releases are built and published, and the one-time setup |
+| [CHANGELOG.md](CHANGELOG.md) | What changed in each release |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Pipeline internals, gateway, layering rules |
 | [docs/SECURITY.md](docs/SECURITY.md) | Threat model, what's covered, what's not |
 | [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) | Complete build verification & test results |
@@ -250,7 +296,7 @@ docs/                  Architecture, usage, security, build report, live test gu
 - **Language:** Go 1.26 (stdlib-first, single binary)
 - **Dependencies:** Only `k8s.io/client-go` and its transitive deps — no CLI frameworks, LLM SDKs, or database drivers
 - **AI:** Any OpenAI-compatible API (local or hosted)
-- **Testing:** 93 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
+- **Testing:** 99 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode; CI on Linux and macOS with govulncheck and a kind cluster
 - **Container:** Distroless non-root image
 
 ## License

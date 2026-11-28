@@ -1,0 +1,40 @@
+name: Bug report
+description: Hody did something wrong, crashed, or gave a misleading result
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! **Remove any real secrets** from logs and output before pasting them.
+        For a security problem, use the Security tab's private reporting instead.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you ran, what Hody printed, and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: hody version
+      description: Output of `hody version`
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: What were you diagnosing?
+      options: [A Docker container, A Kubernetes pod, Nothing (install / doctor / web page)]
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Model
+      description: e.g. qwen3:32b through Ollama
+  - type: textarea
+    id: doctor
+    attributes:
+      label: hody doctor output
+      render: text

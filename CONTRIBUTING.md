@@ -28,6 +28,11 @@ started.
 - [ ] `go test -race ./...` passes
 - [ ] All 12 eval scenarios pass: `./hody eval eval/scenarios`
 
+CI (`.github/workflows/ci.yml`) runs all of these on every push and pull
+request, on Linux and macOS with two Go versions, plus govulncheck, the
+Docker image build, and the read-only ClusterRole on a kind cluster. A
+pull request needs a green CI run.
+
 ## Code guidelines
 
 - **Standard library first.** The only external dependency is `k8s.io/client-go`
