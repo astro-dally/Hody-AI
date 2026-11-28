@@ -11,6 +11,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "exit code 127: the executable was not found (E1, E2)",
       "outcome": "root_cause",
       "category": "command_not_found",
       "summary": "The command is misspelled as 'gunicron', so the entrypoint cannot find it and exits with code 127.",
@@ -18,7 +19,8 @@
       "field": "command",
       "evidence_ids": [
         "E1",
-        "E2"
+        "E2",
+        "E4"
       ],
       "next_checks": [
         "Re-run the container after the fix and watch its logs."
@@ -28,7 +30,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/docker-compose.yml\n+++ b/docker-compose.yml\n@@ -7,1 +7,1 @@\n-    command: [\"gunicron\",\"app:app\",\"-b\",\"0.0.0.0:8000\"]\n+    command: [\"gunicorn\",\"app:app\",\"-b\",\"0.0.0.0:8000\"]\n",
+      "edits": [
+        {
+          "find": "    command: [\"gunicron\",\"app:app\",\"-b\",\"0.0.0.0:8000\"]",
+          "replace": "    command: [\"gunicorn\",\"app:app\",\"-b\",\"0.0.0.0:8000\"]"
+        }
+      ],
       "explanation": "Correct the program name from gunicron to gunicorn, the web server installed in the image."
     }
   },

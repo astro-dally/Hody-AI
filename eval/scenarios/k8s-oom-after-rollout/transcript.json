@@ -11,6 +11,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "OOMKilled with exit code 137 after the new rollout (E1)",
       "outcome": "root_cause",
       "category": "oom_killed",
       "summary": "Revision 2 cut the memory limit from 512Mi to 64Mi; the search process is OOMKilled (exit code 137) while loading its index shards.",
@@ -28,7 +29,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -21,6 +21,6 @@\n         name: search\n-        resources:\n-          limits:\n-            memory: 64Mi\n-          requests:\n-            memory: 64Mi\n+        resources:\n+          limits:\n+            memory: 512Mi\n+          requests:\n+            memory: 256Mi\n",
+      "edits": [
+        {
+          "find": "        name: search\n        resources:\n          limits:\n            memory: 64Mi\n          requests:\n            memory: 64Mi",
+          "replace": "        name: search\n        resources:\n          limits:\n            memory: 512Mi\n          requests:\n            memory: 256Mi"
+        }
+      ],
       "explanation": "Restore the previous memory settings (limit 512Mi, request 256Mi) that worked in revision 1."
     }
   },

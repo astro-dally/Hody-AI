@@ -22,7 +22,7 @@ When a container crashes, it's tempting to paste logs into a chatbot. But those 
 |---|---------|-----|
 | 🔒 | **Secrets never reach the AI** | Passwords, tokens & keys are replaced with `[SECRET_n]` placeholders before the model sees anything |
 | 🛡️ | **Hard to trick** | Injected instructions in logs are flagged; the model can only call read-only tools within your chosen scope |
-| 📎 | **Every claim cites evidence** | Code verifies that cited evidence actually exists; unverifiable claims are downgraded |
+| 📎 | **Every claim cites evidence** | Code checks that cited evidence exists and shows the claimed kind of failure; unsupported claims are downgraded |
 | ✅ | **Fixes are safety-checked** | 11 policy rules + a separate AI critic review every proposed fix before you see it |
 | 🤷 | **Says "not enough evidence"** | Instead of guessing when it doesn't know |
 
@@ -109,8 +109,8 @@ Hody runs a **7-step pipeline** in a fixed order:
   └─────────────┘   └────────────┘   └─────────┘
        │                  │                │
        ▼                  ▼                ▼
-  Unified diff       11 policy rules    You see the
-  + explanation       + AI critic        result — nothing
+  Line edits →       11 policy rules    You see the
+  diff built by Hody  + AI critic        result — nothing
                      (stricter wins)     is ever applied
 ```
 
@@ -188,7 +188,7 @@ Hody's security is **defense in depth**, not a single barrier:
 - **Independent critic** — a second model call reviews fixes without seeing any log evidence
 - **Web hardening** — localhost-only, Host/Origin validation, CSRF tokens, strict CSP
 
-> These are design goals backed by 80 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
+> These are design goals backed by 93 test functions, not guarantees. See [docs/SECURITY.md](docs/SECURITY.md) for the full threat model and known limits.
 
 ## Deployment
 
@@ -250,7 +250,7 @@ docs/                  Architecture, usage, security, build report, live test gu
 - **Language:** Go 1.26 (stdlib-first, single binary)
 - **Dependencies:** Only `k8s.io/client-go` and its transitive deps — no CLI frameworks, LLM SDKs, or database drivers
 - **AI:** Any OpenAI-compatible API (local or hosted)
-- **Testing:** 80 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
+- **Testing:** 93 test functions, table-driven, race-detector clean; 12 scenarios in replay and live mode
 - **Container:** Distroless non-root image
 
 ## License

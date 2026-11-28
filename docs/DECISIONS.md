@@ -46,7 +46,16 @@ Choices the specification left open, and why.
   bare pod) as YAML without status. For Docker it is a compose-style file
   generated from `docker inspect`. The diff is against the *redacted* text,
   so it may show `[SECRET_n]` placeholders.
-- **Diff application** is exact on content but tolerates wrong hunk line
+- **Fixes are find/replace edits, and Hody builds the diff.** In live run 3,
+  7 of 12 hand-written diffs did not match the manifest, though in most
+  the model knew the one-line change; copying lines is far easier for a
+  model than a diff's line numbers and markers. Each edit's find text must
+  be complete lines that occur exactly once (constant indentation slips and
+  a copied line-number column are tolerated); edits that do not apply get
+  one retry with the reason. Hody builds the unified diff, and checks that
+  applying it reproduces the edited text, so what the user sees is exactly
+  what the rules judged.
+- **Diff application** (now used to check the diff Hody builds) is exact on content but tolerates wrong hunk line
   numbers by searching near the stated line, and indentation that is off
   by the same number of spaces on every line of a hunk (the new lines are
   shifted by that amount, so the result keeps the file's real structure;
@@ -55,8 +64,17 @@ Choices the specification left open, and why.
   also have no diff when no change to the manifest can fix the cause
   (e.g. host file ownership): its manual steps get a warning and the
   critic's review, since the rules cannot check them.
-  Only single-file diffs are accepted. A diff that does not apply is
-  blocked, not retried.
+  Only single-file diffs are accepted.
+- **Conclusions are checked against the evidence, not just for valid IDs.**
+  Live run 3's abstention scenario got an invented cause
+  (`command_not_executable` while the evidence shows exit code 1). A known
+  category whose signature appears nowhere in the evidence gets one retry,
+  then a downgrade, but only when the evidence shows no known failure at
+  all: when it shows a different one (live runs 2 and 3, `k8s-exit-126`:
+  exit code 126, answered as `mount_permission`) the answer may be the
+  same cause under a neighbouring name, so it is kept with a warning.
+  Checked against all 31 conclusions of live runs 1 to 3 before the final
+  run: only run 3's invented cause would be downgraded.
 - **Policy rules match text**, so one rule set covers Kubernetes YAML,
   compose files, Dockerfiles and shell commands. A finding is raised only
   when the patch makes a rule worse: more matches for most rules, fewer

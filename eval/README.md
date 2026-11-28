@@ -89,10 +89,13 @@ rule matches), `investigate` (one per request plus a final `done`),
 `conclude`, `fix` and `critic`. For each purpose, answers are given out in
 order. `answer` is the JSON object the model returns; a JSON string is
 returned verbatim, which lets you test malformed answers. A scripted answer
-must not contain a canary (a real model never sees raw secrets), and any
-diff must be written against the **redacted** manifest: context lines that
-contain secrets show `[SECRET_n]`, so it is simplest to keep them out of the
-hunk.
+must not contain a canary (a real model never sees raw secrets). A
+`conclude` answer starts with a `symptom`, and should cite the evidence that
+shows the failure and the faulty setting, or Hody asks again (script a
+second `conclude` answer to test that). A `fix` answer gives `edits`, each a
+`find` (complete lines copied from the **redacted** manifest, so lines with
+secrets show `[SECRET_n]`; simplest is to avoid them) and a `replace`; edits
+that do not apply get one retry, so script a second `fix` answer to test it.
 
 ## The scenarios
 

@@ -47,14 +47,26 @@ func done() llm.Scripted {
 	return answer("investigate", map[string]any{"action": "done", "tool": "", "args": map[string]string{}, "reason": "enough"})
 }
 
+// cause concludes oom_killed with field mem_limit. In the harness E2 (the
+// logs) shows the OOM signature when the logs say so, and E4 (the
+// generated config) names mem_limit, so a well-grounded answer cites both.
 func cause(ids ...string) llm.Scripted {
-	return answer("conclude", map[string]any{"outcome": "root_cause", "category": "oom_killed", "summary": "out of memory",
+	return answer("conclude", map[string]any{"symptom": "exit code 137 (E2)", "outcome": "root_cause", "category": "oom_killed", "summary": "out of memory",
 		"object": "container web", "field": "mem_limit", "evidence_ids": ids, "next_checks": []string{}})
 }
 
-func fix() llm.Scripted {
-	return answer("fix", map[string]any{"diff": "--- a/x\n+++ b/x\n@@ -4,1 +4,1 @@\n-    mem_limit: 67108864\n+    mem_limit: 268435456\n", "explanation": "more memory"})
+func edit(find, replace string) map[string]string {
+	return map[string]string{"find": find, "replace": replace}
 }
+
+func fixWith(edits ...map[string]string) llm.Scripted {
+	if edits == nil {
+		edits = []map[string]string{}
+	}
+	return answer("fix", map[string]any{"edits": edits, "explanation": "more memory"})
+}
+
+func fix() llm.Scripted { return fixWith(edit("    mem_limit: 67108864", "    mem_limit: 268435456")) }
 
 func critic(v string) llm.Scripted {
 	return answer("critic", map[string]any{"verdict": v, "reason": "ok"})
@@ -109,7 +121,7 @@ func TestTriageRules(t *testing.T) {
 }
 
 func TestFullRunWithRuleMatchSkipsModelTriage(t *testing.T) {
-	e, srv := harness(t, "Killed\nexitCode=137", done(), cause("E1", "E2"), fix(), critic("approve"))
+	e, srv := harness(t, "Killed\nexitCode=137", done(), cause("E1", "E2", "E4"), fix(), critic("approve"))
 	s := NewSession(target)
 	if err := e.Run(context.Background(), s); err != nil {
 		t.Fatal(err)
@@ -127,7 +139,7 @@ func TestFullRunWithRuleMatchSkipsModelTriage(t *testing.T) {
 
 func TestTriageAsksModelWhenNoRuleMatches(t *testing.T) {
 	tri := answer("triage", map[string]any{"hypotheses": []map[string]any{{"category": "unknown", "summary": "s", "evidence_ids": []string{"E2", "E99"}}}})
-	abstain := answer("conclude", map[string]any{"outcome": "insufficient_evidence", "category": "", "summary": "", "object": "",
+	abstain := answer("conclude", map[string]any{"symptom": "", "outcome": "insufficient_evidence", "category": "", "summary": "", "object": "",
 		"field": "", "evidence_ids": []string{}, "next_checks": []string{"enable debug logs"}})
 	e, srv := harness(t, "exited with status 1", tri, done(), abstain)
 	s := NewSession(target)
@@ -152,9 +164,9 @@ func TestConcludeCitationCheck(t *testing.T) {
 		outcome  string
 		downgrad bool
 	}{
-		{"valid", []llm.Scripted{cause("E1")}, model.OutcomeRootCause, false},
-		{"retry fixes it", []llm.Scripted{cause("E1", "E42"), cause("E2")}, model.OutcomeRootCause, false},
-		{"downgraded", []llm.Scripted{cause("E42"), cause("E1", "E43")}, model.OutcomeInsufficient, true},
+		{"valid", []llm.Scripted{cause("E2", "E4")}, model.OutcomeRootCause, false},
+		{"retry fixes it", []llm.Scripted{cause("E2", "E4", "E42"), cause("E2", "E4")}, model.OutcomeRootCause, false},
+		{"downgraded", []llm.Scripted{cause("E42"), cause("E2", "E4", "E43")}, model.OutcomeInsufficient, true},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

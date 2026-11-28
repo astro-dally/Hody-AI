@@ -11,6 +11,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "the liveness probe fails and the container is restarted (E2)",
       "outcome": "root_cause",
       "category": "probe_failure",
       "summary": "The liveness probe calls port 8080, but the app listens on port 3000 (its log says 'listening on :3000'), so every probe is refused and the kubelet restarts the container.",
@@ -18,7 +19,8 @@
       "field": "spec.template.spec.containers[web].livenessProbe.httpGet.port",
       "evidence_ids": [
         "E2",
-        "E3"
+        "E3",
+        "E6"
       ],
       "next_checks": [
         "Apply the change with your usual deployment process and watch the rollout."
@@ -28,7 +30,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -23,2 +23,2 @@\n             path: /healthz\n-            port: 8080\n+            port: 3000\n",
+      "edits": [
+        {
+          "find": "            path: /healthz\n            port: 8080",
+          "replace": "            path: /healthz\n            port: 3000"
+        }
+      ],
       "explanation": "Point the liveness probe at port 3000, where the app actually listens."
     }
   },

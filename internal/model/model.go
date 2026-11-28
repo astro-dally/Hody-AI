@@ -92,6 +92,7 @@ type ToolCall struct {
 // RootCause is the conclusion, or an explicit abstention.
 type RootCause struct {
 	Outcome     string   `json:"outcome"`
+	Symptom     string   `json:"symptom,omitempty"` // the failure the evidence shows
 	Category    string   `json:"category"`
 	Summary     string   `json:"summary"`
 	Object      string   `json:"object"`
@@ -101,13 +102,27 @@ type RootCause struct {
 	Note        string   `json:"note,omitempty"` // set by code, e.g. on downgrade
 }
 
-// Fix is a proposed change. It is never applied to anything real.
+// Edit is one change the model proposes: the exact lines Find, copied
+// from the manifest, are replaced by Replace ("" deletes them).
+type Edit struct {
+	Find    string `json:"find"`
+	Replace string `json:"replace"`
+}
+
+// Fix is a proposed change. It is never applied to anything real. The
+// model gives edits; Hody applies them to a copy of the manifest and builds
+// the diff itself, so the diff always matches the manifest.
 type Fix struct {
-	EvidenceID  string `json:"evidence_id"` // the manifest the diff targets
-	Diff        string `json:"diff"`
+	EvidenceID  string `json:"evidence_id"` // the manifest the edits target
+	Edits       []Edit `json:"edits,omitempty"`
+	Diff        string `json:"diff"` // built by Hody; empty if the edits could not be applied
 	Explanation string `json:"explanation"`
 	ApplyError  string `json:"apply_error,omitempty"`
 }
+
+// Manual reports a fix with no edits: no change to the manifest can fix
+// the cause, and the explanation lists steps to do by hand.
+func (f *Fix) Manual() bool { return len(f.Edits) == 0 }
 
 // Finding is one policy rule result for a proposed fix.
 type Finding struct {
@@ -178,6 +193,7 @@ func (s *Session) Clone() Session {
 	}
 	if s.Fix != nil {
 		f := *s.Fix
+		f.Edits = append([]Edit(nil), s.Fix.Edits...)
 		c.Fix = &f
 	}
 	if s.Review != nil {

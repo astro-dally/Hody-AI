@@ -92,3 +92,36 @@ func TestObjectMatches(t *testing.T) {
 		}
 	}
 }
+
+// Before the evidence checks, an answer was never downgraded with its guess
+// kept, so this did not matter: such an answer is a miss, not a hit.
+func TestAbstentionIsAnAccuracyMiss(t *testing.T) {
+	l := Label{Name: "x", Category: "oom_killed", FaultyObject: "container web", FaultyField: "mem_limit", ExpectOutcome: model.OutcomeRootCause}
+	for outcome, want := range map[string]bool{model.OutcomeRootCause: true, model.OutcomeInsufficient: false} {
+		s := &model.Session{Status: model.StatusComplete, RootCause: &model.RootCause{Outcome: outcome, Category: "oom_killed",
+			Object: "container web", Field: "mem_limit"}}
+		g := GradeResult(Result{Scenario: Scenario{Label: l}, Session: s, RequestDir: t.TempDir()}, true)
+		for k, v := range g.Accuracy {
+			if v != want {
+				t.Errorf("outcome %s: accuracy %s = %v, want %v", outcome, k, v, want)
+			}
+		}
+	}
+}
+
+func TestFixStatus(t *testing.T) {
+	cases := []struct {
+		fix  *model.Fix
+		want string
+	}{
+		{nil, ""},
+		{&model.Fix{Explanation: "do this on the host"}, "manual"},
+		{&model.Fix{Edits: []model.Edit{{Find: "a", Replace: "b"}}, ApplyError: "edit 1: not found"}, "not applied"},
+		{&model.Fix{Edits: []model.Edit{{Find: "a", Replace: "b"}}, Diff: "--- a/x"}, "applied"},
+	}
+	for _, c := range cases {
+		if got := fixStatus(c.fix); got != c.want {
+			t.Errorf("fixStatus(%+v) = %q, want %q", c.fix, got, c.want)
+		}
+	}
+}

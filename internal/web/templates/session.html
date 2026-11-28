@@ -11,6 +11,7 @@ Policy rules said {{.PolicyVerdict}}; the separate critic said {{.CriticVerdict}
 
 {{with .RootCause}}
 <h2>{{if eq .Outcome "root_cause"}}Root cause{{else}}Not enough evidence{{end}}</h2>
+{{if .Symptom}}<p>What failed: {{.Symptom}}</p>{{end}}
 {{if .Summary}}<p>{{.Summary}}</p>{{end}}
 {{if .Object}}<p>Object: <code>{{.Object}}</code>{{if .Field}} · field: <code>{{.Field}}</code>{{end}}</p>{{end}}
 {{if .Note}}<p class="error">{{.Note}}</p>{{end}}
@@ -20,10 +21,11 @@ Policy rules said {{.PolicyVerdict}}; the separate critic said {{.CriticVerdict}
 
 {{with .Fix}}
 <h2>Proposed fix</h2>
-{{if .Diff}}<p>Not applied. Review it, then make the change yourself if you agree. Diff against evidence {{.EvidenceID}}:</p>
-<pre>{{.Diff}}</pre>{{else}}<p>No change to the configuration can fix this. Steps to do by hand:</p>{{end}}
+{{if .Manual}}<p>No change to the configuration can fix this. Steps to do by hand:</p>
+{{else if .ApplyError}}<p class="error">The model's edits could not be applied to evidence {{.EvidenceID}} ({{.ApplyError}}), so there is no diff to show.</p>
+{{else}}<p>Not applied. Review it, then make the change yourself if you agree. Diff against evidence {{.EvidenceID}}:</p>
+<pre>{{.Diff}}</pre>{{end}}
 <p>{{.Explanation}}</p>
-{{if .ApplyError}}<p class="error">The diff does not apply: {{.ApplyError}}</p>{{end}}
 {{end}}
 {{with .Review}}{{if .CriticReason}}<p>Critic: {{.CriticReason}}</p>{{end}}
 {{range .Findings}}<div class="finding"><span class="sev">{{.Severity}}: {{.Rule}}</span><br>Risk: {{.Risk}}<br>Safer: {{.Alternative}}</div>{{end}}{{end}}

@@ -109,30 +109,49 @@ model reacts to injections; only live mode can.
 
 ## Promise 3: every claim cites evidence, checked by code
 
-**How:** `conclude` checks each cited ID against the session; a root cause
-needs at least one. Bad citations get one retry, then the result is
-downgraded to insufficient evidence with a note.
+**How:** the model first states the symptom it sees, then the cause.
+`conclude` checks the answer against the evidence in code: every cited ID
+must exist; if the category is one of Hody's known failures, its
+signature (the triage rule, e.g. exit code 126 for
+`command_not_executable`) must appear in the evidence and some cited
+evidence must show it; if the faulty setting is named in the evidence,
+some cited evidence must name it. Any problem gets one retry with a note
+that names evidence IDs only, never evidence text. Invented IDs, or a
+known failure claimed while the evidence shows no known failure at all,
+are then downgraded to insufficient evidence with a note. A different
+known failure in the evidence may be the same cause under a neighbouring
+name, and missing citations make an answer weaker, not wrong: those are
+kept with a warning.
 
-**Tested by:** `TestConcludeCitationCheck` (valid, fixed on retry,
-downgraded), grader checks "cited evidence exists" and "required tools
-cited".
+**Tested by:** `TestConcludeCitationCheck`,
+`TestConcludeChecksFailureSignature` (live run 3's invented cause),
+`TestConcludeNeighbourCategoryIsNotDowngraded`,
+`TestConcludeAsksForMissingCitations`, grader checks "cited evidence
+exists" and "required tools cited".
 
-**Does not cover:** code checks that cited evidence exists, not that it
-supports the claim.
+**Does not cover:** only Hody's own categories have signatures; a cause
+under a name of the model's own is checked for citations but not for a
+signature. Code checks that the evidence shows the named kind of failure,
+not that the model's explanation of it is right.
 
 ## Promise 4: every fix is safety-checked
 
-**How:** the diff is applied to an in-memory copy of the manifest; eleven
+**How:** the model proposes find/replace edits; Hody applies them to an
+in-memory copy of the manifest, builds the diff the user sees, and checks
+that the diff reproduces exactly the text the rules judge. Eleven
 rules run on the original and the patched text and flag anything the
 patch makes worse (block: privileged, root, host namespaces, host paths,
 added capabilities, inline secrets, broad permissions, disabled TLS
 checks; warn: removed limits, removed probes, `latest` or untagged
-images). A diff that does not apply is blocked. A separate critic call
+images). Edits that do not match the manifest get one retry with the
+reason, then are blocked. A separate critic call
 sees only the root cause and the diff. The stricter verdict wins; unknown
 verdicts count as block. Nothing is ever applied.
 
 **Tested by:** `TestUnsafeFixes` (18 unsafe fixes covering every rule and 3
-safe controls in `eval/testdata/unsafe_fixes.json`), `TestApply`,
+safe controls in `eval/testdata/unsafe_fixes.json`), `TestApplyEdits`,
+`TestPatchRoundTrip`, `TestEditsAreCheckedByRules`,
+`TestFixRetryWhenEditsDoNotApply`, `TestApply`,
 `TestExistingViolationIsNotBlamedOnPatch`, `TestReviewVerdicts`,
 `TestStricter`.
 
@@ -145,8 +164,11 @@ permission change done by a script the diff only references).
 **How:** `insufficient_evidence` is a first-class outcome requiring next
 checks; no fix is proposed for it.
 
-**Tested by:** `TestTriageAsksModelWhenNoRuleMatches`, scenario
-`k8s-no-findable-cause` (grader: outcome and "abstained without a fix").
+**Tested by:** `TestTriageAsksModelWhenNoRuleMatches`,
+`TestDowngradedAnswerGetsNoFix`, scenario `k8s-no-findable-cause`
+(grader: outcome and "abstained without a fix"; its replay script now
+replays live run 3's invented cause, which Hody's note turns into an
+abstention).
 
 **Does not cover:** whether a real model abstains when it should is an
 accuracy question, measurable only in live mode.

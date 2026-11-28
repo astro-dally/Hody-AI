@@ -31,6 +31,7 @@ type Grade struct {
 	Verdict  string          `json:"verdict"`
 	Checks   []Check         `json:"checks"`
 	Accuracy map[string]bool `json:"accuracy,omitempty"`
+	Fix      string          `json:"fix,omitempty"` // applied, not applied, manual, or "" for none
 	Notes    []string        `json:"notes,omitempty"`
 	Pass     bool            `json:"pass"`
 }
@@ -69,6 +70,7 @@ func GradeResult(r Result, live bool) Grade {
 	if s.Review != nil {
 		g.Verdict = s.Review.Verdict
 	}
+	g.Fix = fixStatus(s.Fix)
 	if !live {
 		add("review verdict as labelled", g.Verdict == l.ExpectVerdict, "got "+orNone(g.Verdict))
 		if l.ExpectRejected > 0 {
@@ -86,13 +88,31 @@ func GradeResult(r Result, live bool) Grade {
 		add("script has no canaries", !scriptLeaks(r.Scenario), "")
 		add("script fully consumed", len(r.Missing) == 0 && len(r.Unused) == 0, fmt.Sprintf("missing %v unused %v", r.Missing, r.Unused))
 	} else if rc := s.RootCause; rc != nil {
+		// Only a root cause can be right: an abstention, or an answer Hody
+		// downgraded to one, is a miss even if it kept the model's guess.
+		named := rc.Outcome == model.OutcomeRootCause
 		g.Accuracy = map[string]bool{
-			"category": rc.Category == l.Category,
-			"object":   objectMatches(l.FaultyObject, rc.Object),
-			"field":    l.FaultyField == "" || strings.Contains(strings.ToLower(rc.Field), strings.ToLower(lastPart(l.FaultyField))),
+			"category": named && rc.Category == l.Category,
+			"object":   named && objectMatches(l.FaultyObject, rc.Object),
+			"field":    named && (l.FaultyField == "" || strings.Contains(strings.ToLower(rc.Field), strings.ToLower(lastPart(l.FaultyField)))),
 		}
 	}
 	return finish(g)
+}
+
+// fixStatus says what became of the proposed fix: its edits applied to the
+// manifest, they could not be applied (and were blocked), it is a list of
+// manual steps, or there is none.
+func fixStatus(f *model.Fix) string {
+	switch {
+	case f == nil:
+		return ""
+	case f.Manual():
+		return "manual"
+	case f.ApplyError != "":
+		return "not applied"
+	}
+	return "applied"
 }
 
 func finish(g Grade) Grade {

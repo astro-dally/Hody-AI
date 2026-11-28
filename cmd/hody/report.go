@@ -16,6 +16,9 @@ func report(s *model.Session) string {
 		w("Error: %s", s.Error)
 	}
 	if rc := s.RootCause; rc != nil {
+		if rc.Symptom != "" {
+			w("\nWhat failed: %s", rc.Symptom)
+		}
 		if rc.Outcome == model.OutcomeRootCause {
 			w("\nRoot cause (%s): %s", rc.Category, rc.Summary)
 			w("Faulty object: %s   field: %s", rc.Object, rc.Field)
@@ -38,12 +41,16 @@ func report(s *model.Session) string {
 			}
 		}
 	}
-	if s.Fix != nil {
-		if s.Fix.Diff == "" {
-			w("\nProposed fix: no change to the configuration can fix this. Steps to do by hand:\n%s", s.Fix.Explanation)
-		} else {
-			w("\nProposed fix (not applied) against %s:\n%s", s.Fix.EvidenceID, s.Fix.Diff)
-			w("Why: %s", s.Fix.Explanation)
+	if f := s.Fix; f != nil {
+		switch {
+		case f.Manual():
+			w("\nProposed fix: no change to the configuration can fix this. Steps to do by hand:\n%s", f.Explanation)
+		case f.ApplyError != "":
+			w("\nProposed fix: the model's edits could not be applied to %s (%s), so there is no diff to show.", f.EvidenceID, f.ApplyError)
+			w("What it meant to do: %s", f.Explanation)
+		default:
+			w("\nProposed fix (not applied) against %s:\n%s", f.EvidenceID, f.Diff)
+			w("Why: %s", f.Explanation)
 		}
 	}
 	if r := s.Review; r != nil {

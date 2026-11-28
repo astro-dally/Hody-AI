@@ -38,6 +38,25 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "exit code 1 after logging exiting (E1, E4)",
+      "outcome": "root_cause",
+      "category": "command_not_executable",
+      "summary": "The start script lacks execute permission (defaultMode 420), so the container exits with code 1.",
+      "object": "deployment/ledger",
+      "field": "spec.template.spec.volumes[entrypoint].configMap.defaultMode",
+      "evidence_ids": [
+        "E1",
+        "E4"
+      ],
+      "next_checks": [
+        "Check the script's permissions."
+      ]
+    }
+  },
+  {
+    "purpose": "conclude",
+    "answer": {
+      "symptom": "exit code 1 after logging exiting, with no error message (E1, E4)",
       "outcome": "insufficient_evidence",
       "category": "",
       "summary": "The container exits with code 1 after 'configuration ok' and logs no error; the node reports no disk pressure, so the log's claim of a full disk is not supported.",

@@ -11,6 +11,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "the pod stays Pending: no node has enough memory (E2)",
       "outcome": "root_cause",
       "category": "unschedulable",
       "summary": "Revision 2 raised the memory request from 2Gi to 64Gi; no node has that much allocatable memory, so the scheduler cannot place the pod.",
@@ -29,7 +30,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -26,6 +26,4 @@\n         name: trainer\n-        resources:\n-          limits:\n-            memory: 64Gi\n-          requests:\n-            memory: 64Gi\n+        resources:\n+          requests:\n+            memory: 2Gi\n",
+      "edits": [
+        {
+          "find": "        name: trainer\n        resources:\n          limits:\n            memory: 64Gi\n          requests:\n            memory: 64Gi",
+          "replace": "        name: trainer\n        resources:\n          requests:\n            memory: 2Gi"
+        }
+      ],
       "explanation": "Request 2Gi again so the pod fits on a node."
     }
   },

@@ -28,10 +28,15 @@ calls them in this order, stopping at the first error:
  1 collect      fixed first-look tools (tools.FirstLook)
  2 triage       code rules; model only if no rule matches
  3 investigate  model may request up to 8 more tools; each validated first
- 4 conclude     root cause with evidence IDs, or insufficient_evidence;
-                IDs checked in code, one retry, then downgrade
- 5 propose_fix  unified diff against the manifest evidence (skipped on abstention)
- 6 review_fix   diff applied in memory, policy rules on before/after,
+ 4 conclude     symptom, then root cause with evidence IDs, or
+                insufficient_evidence; checked in code against the evidence
+                (IDs exist, a known failure's signature is present and cited,
+                the faulty setting's evidence is cited), one retry, then
+                downgrade if IDs are invented or no known failure is shown
+ 5 propose_fix  find/replace edits to the manifest evidence; Hody applies
+                them and builds the diff, one retry if they do not apply
+                (skipped on abstention)
+ 6 review_fix   edits applied in memory, policy rules on before/after,
                 critic call with cause + diff only; stricter verdict wins
  7 approve      session complete; shown to the user, nothing applied
 ```
@@ -153,7 +158,8 @@ it can be stored as JSON.
 | `internal/pipeline/collect.go` … `approve.go` | one file per step |
 | `internal/pipeline/prompts.go` | system prompt, task texts, answer types |
 | `internal/policy/rules.go` | eleven fix policy rules, verdicts |
-| `internal/policy/patch.go` | in-memory unified diff application |
+| `internal/policy/edits.go` | applies the model's edits, builds the diff, checks the round trip |
+| `internal/policy/patch.go` | in-memory unified diff application (used to check the built diff) |
 | `internal/store/store.go` | session files and audit log |
 | `internal/web/server.go` | handlers, host/origin guard, CSRF |
 | `internal/web/templates/*.html`, `static/style.css` | embedded page |

@@ -114,7 +114,7 @@ Status: done, partly done, not done. Test names are Go test functions.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 80 after the first live runs |
+| Unit tests: gateway, triage, policy, citations, tool validation, scope lock, parsing, tripwire | done | see tables above; 66 test functions at the first build, 73 after the live-readiness review, 80 after the first live runs, 93 before the final run |
 | Docker client refuses non-GET and non-allowlisted paths | done | `TestReadOnlyRefusesNonGET`, `TestReadOnlyPathAllowlist` |
 | Source inspection test for k8s writes and Secret reads | done | `TestSourceHasNoWriteOrSecretCalls` (checked to fail on a planted `Delete`) |
 | Fakes: httptest Docker API, client-go fake clientset, fake model server | done | `dockertest/fake.go`, `fake.NewClientset`, `internal/llm/replay.go` |
@@ -421,6 +421,50 @@ file. Hody's deterministic check, which applies the diff to the real
 manifest, caught every one. `qwen3:30b` in run 1 wrote far better diffs;
 diff quality varies a lot between models.
 
+### Changes before the final run
+
+Reading run 3's sessions (and runs 1 and 2) showed two weak spots, and
+both were changed before the final run. The answer key was not touched.
+
+**Fixes are find/replace edits; Hody builds the diff.** Seven of run 3's
+twelve fixes did not match the manifest. In five of them the model knew
+the one-line change (`420` to `493`, `8080` to `3000`, `DATABASE_HOST` to
+`DB_HOST`) but garbled the diff around it: duplicated context lines, a
+lost list marker, or no `-`/`+` lines at all. Now the model names the
+lines to change by their content (`find`, `replace`), and
+`policy.Patch` applies them, builds the unified diff and checks that the
+diff reproduces the edited text exactly. Edits that do not match get one
+retry with the reason, which names the edit and line numbers but never
+quotes the manifest. Applied to run 3's real manifests, the intended
+changes of six of the seven broken fixes are unique one-line edits; the
+seventh (`memory: 64Mi`, on two lines) gets "occurs 2 times (at lines 34,
+36)" and works with a neighbouring line.
+
+**Conclusions are checked against the evidence.** In run 3's abstention
+scenario the model claimed `command_not_executable` although the evidence
+shows exit code 1 (and the script's own "starting" and "exiting" lines).
+The model now states the symptom first, and `conclude` checks that a known
+category's signature appears in the evidence and is cited, and that
+evidence naming the faulty setting is cited. One retry with a note (IDs
+and Hody's rule summaries only, never evidence text); then invented IDs,
+or a known failure claimed while the evidence shows no known failure,
+are downgraded. A first version also would have downgraded runs 2 and 3's
+`k8s-exit-126` answer, a correct cause under the neighbouring category
+`mount_permission`; checking against the real sessions caught this, and
+such answers are now kept with a warning. Over all 31 conclusions of runs
+1 to 3, only run 3's invented cause would be downgraded; seven would get
+a retry asking for a missing citation (mostly the generated config file).
+
+**The grader** now counts an answer Hody downgraded as an accuracy miss,
+as the summary always said (no earlier run had such an answer), and
+records what became of each fix (`applied`, `not applied`, `manual`),
+shown as a new Fix column in the live summary.
+
+Test functions: 93 (from 80). Replay 12 of 12; two replay scripts now
+replay run 3's failures (the citation-only answer in
+`docker-mount-permission`, the invented cause in `k8s-no-findable-cause`)
+and pass only because of the new checks.
+
 ## Verified and not verified
 
 ### Verified in the build sandbox
@@ -428,7 +472,8 @@ diff quality varies a lot between models.
 - The code builds with Go 1.26.8; `gofmt`, `go vet` and all 66 test
   functions pass, also under the race detector. After the live-readiness
   review it builds with Go 1.27.4, and all 73 test functions pass (80
-  after the first live runs), also under the race detector.
+  after the first live runs, 93 before the final run), also under the race
+  detector.
 - Gateway, scanner, limiter, parsing, tripwire, registry and scope lock,
   triage rules, policy rules and diff application all behave as their
   table-driven tests describe.

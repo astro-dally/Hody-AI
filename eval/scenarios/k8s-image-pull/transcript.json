@@ -11,6 +11,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "ImagePullBackOff: the image tag does not exist (E2)",
       "outcome": "root_cause",
       "category": "image_pull",
       "summary": "The Deployment's new image tag shop/catalog:2.4.O does not exist in the registry (manifest unknown), so the kubelet cannot pull it; the tag looks like a typo for 2.4.0.",
@@ -28,7 +29,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -25,1 +25,1 @@\n-        image: shop/catalog:2.4.O\n+        image: shop/catalog:2.4.0\n",
+      "edits": [
+        {
+          "find": "        image: shop/catalog:2.4.O",
+          "replace": "        image: shop/catalog:2.4.0"
+        }
+      ],
       "explanation": "Use the tag that exists, 2.4.0 (zero, not the letter O)."
     }
   },

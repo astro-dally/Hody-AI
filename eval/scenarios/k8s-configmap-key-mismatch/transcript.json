@@ -23,6 +23,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "CreateContainerConfigError: a key is missing from the ConfigMap (E1, E2)",
       "outcome": "root_cause",
       "category": "config_reference",
       "summary": "The container's DATABASE_URL reads key database_url from ConfigMap orders-config, but the ConfigMap only has DATABASE_URL (upper case), so the container cannot be created.",
@@ -40,7 +41,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/manifest.yaml\n+++ b/manifest.yaml\n@@ -25,2 +25,2 @@\n             configMapKeyRef:\n-              key: database_url\n+              key: DATABASE_URL\n",
+      "edits": [
+        {
+          "find": "            configMapKeyRef:\n              key: database_url",
+          "replace": "            configMapKeyRef:\n              key: DATABASE_URL"
+        }
+      ],
       "explanation": "Reference the key exactly as it is spelled in the ConfigMap: DATABASE_URL."
     }
   },

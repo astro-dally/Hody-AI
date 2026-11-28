@@ -33,6 +33,7 @@
   {
     "purpose": "conclude",
     "answer": {
+      "symptom": "exit code 1 after the log line saying DB_HOST is not set (E2)",
       "outcome": "root_cause",
       "category": "missing_env",
       "summary": "The application reads DB_HOST, but the container only sets DATABASE_HOST, so startup fails with 'DB_HOST is not set'.",
@@ -50,7 +51,12 @@
   {
     "purpose": "fix",
     "answer": {
-      "diff": "--- a/docker-compose.yml\n+++ b/docker-compose.yml\n@@ -9,1 +9,1 @@\n-      - DATABASE_HOST=db.internal\n+      - DB_HOST=db.internal\n",
+      "edits": [
+        {
+          "find": "      - DATABASE_HOST=db.internal",
+          "replace": "      - DB_HOST=db.internal"
+        }
+      ],
       "explanation": "Rename the variable to DB_HOST, the name the application reads."
     }
   },

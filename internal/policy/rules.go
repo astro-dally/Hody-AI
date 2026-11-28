@@ -106,7 +106,7 @@ func Check(original, patched string) []model.Finding {
 // NotApplied is the finding for a diff that does not apply.
 func NotApplied(reason string) model.Finding {
 	return model.Finding{Rule: "patch-does-not-apply", Severity: model.VerdictBlock,
-		Risk:        "The proposed diff does not match the manifest (" + reason + "), so nobody can tell what it would really change.",
+		Risk:        "The proposed change does not match the manifest (" + reason + "), so nobody can tell what it would really change.",
 		Alternative: "Ask for the diagnosis again, or make the change by hand after reading the explanation."}
 }
 

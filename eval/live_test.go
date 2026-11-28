@@ -71,9 +71,9 @@ func runFakeLive(t *testing.T, extra Label) (Grade, []string) {
 	}
 	srv := llm.NewReplay([]llm.Scripted{
 		ans("investigate", map[string]any{"action": "done", "tool": "", "args": map[string]string{}, "reason": "r"}),
-		ans("conclude", map[string]any{"outcome": "root_cause", "category": "oom_killed", "summary": "s", "object": "container web",
-			"field": "mem_limit", "evidence_ids": []string{"E1"}, "next_checks": []string{}}),
-		ans("fix", map[string]any{"diff": "--- a/c\n+++ b/c\n@@ -13,1 +13,1 @@\n-    mem_limit: 67108864\n+    mem_limit: 268435456\n", "explanation": "e"}),
+		ans("conclude", map[string]any{"symptom": "OOMKilled (E1)", "outcome": "root_cause", "category": "oom_killed", "summary": "s", "object": "container web",
+			"field": "mem_limit", "evidence_ids": []string{"E1", "E4"}, "next_checks": []string{}}),
+		ans("fix", map[string]any{"edits": []map[string]string{{"find": "    mem_limit: 67108864", "replace": "    mem_limit: 268435456"}}, "explanation": "e"}),
 		ans("critic", map[string]any{"verdict": "approve", "reason": "r"}),
 	})
 	defer srv.Close()
