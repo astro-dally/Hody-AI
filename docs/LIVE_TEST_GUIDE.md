@@ -296,16 +296,7 @@ cd ~/Hody-AI
 bash scripts/mac.sh fetch ~/.ssh/hody-key.pem <PUBLIC-IP>
 ```
 
-This downloads both files into `~/Downloads/hody-live-<date-time>/` and copies the summary to `docs/LIVE_EVAL.md` in your repo. Then:
-
-```sh
-cd ~/Hody-AI
-git add docs/LIVE_EVAL.md
-git commit -m "docs: record the first live evaluation"
-git push
-```
-
-Finally, `docs/BUILD_REPORT.md` and `README.md` still say the live run was "not done". Change them to point at `docs/LIVE_EVAL.md` (Claude can make this edit if you share the summary), then commit and push.
+This downloads both files into `~/hody-results-<date-time>/` (not `~/Downloads`, which macOS keeps Terminal from reading) and makes `~/hody-results-<date-time>.zip` next to it. Share that zip with Claude, who records the run in `docs/LIVE_EVAL.md`, updates `README.md` and `docs/BUILD_REPORT.md`, and sends the change as a patch. The script leaves your repo untouched, so the patch applies cleanly.
 
 The big `.tgz` file is for you to keep, not for git: the repo deliberately ignores `eval/results/`.
 
@@ -435,8 +426,7 @@ bash ~/ec2.sh api       # Plan B only: use a free hosted API instead
 kind delete cluster     # when finished
 
 # ── Mac, Terminal 3 ─────────────────────────────────────────
-cd ~/Hody-AI && bash scripts/mac.sh fetch ~/.ssh/hody-key.pem <PUBLIC-IP>
-git add docs/LIVE_EVAL.md && git commit -m "docs: record the first live evaluation" && git push
+cd ~/Hody-AI && bash scripts/mac.sh fetch ~/.ssh/hody-key.pem <PUBLIC-IP>   # then share ~/hody-results-<date-time>.zip
 
 # ── AWS console ─────────────────────────────────────────────
 # Instance state → Stop (end of day) / Terminate (project finished)

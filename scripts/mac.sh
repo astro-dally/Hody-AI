@@ -4,7 +4,7 @@
 #   GPU=<user>@<gpu-machine> bash mac.sh up <key.pem> <server-ip>   use Ollama on your GPU machine (via Tailscale)
 #   bash mac.sh up    <key.pem> <server-ip>    use Ollama on this Mac instead
 #   bash mac.sh ssh   <key.pem> <server-ip>    open a terminal on the server (inside tmux)
-#   bash mac.sh fetch <key.pem> <server-ip>    download the results to ~/Downloads
+#   bash mac.sh fetch <key.pem> <server-ip>    download the results to ~/hody-results-<date-time>
 #
 # "up" keeps running, because it IS the connection. Leave its window open; Ctrl-C stops it.
 # Optional: MODEL=<name> to choose the model (default for GPU mode: qwen3:30b).
@@ -135,14 +135,13 @@ case $cmd in
   up) up ;;
   ssh) copy_scripts; exec ssh "${ssh_opts[@]}" -t "$server" 'tmux new -A -s hody' ;;
   fetch)
-    dest="$HOME/Downloads/hody-live-$(date +%Y%m%d-%H%M)"
+    # Not ~/Downloads, which macOS keeps Terminal from reading; and not into
+    # the repo, so that it stays clean for patches.
+    dest="$HOME/hody-results-$(date +%Y%m%d-%H%M)"
     mkdir -p "$dest"
     scp "${ssh_opts[@]}" "$server:~/hody-live-results.tgz" "$server:~/LIVE_EVAL.md" "$dest/" ||
       die "nothing to download yet. Has 'bash ~/ec2.sh' finished on the server?"
-    say "Saved to $dest"
-    if [ -d "$here/../.git" ] && [ -d "$here/../docs" ]; then
-      cp "$dest/LIVE_EVAL.md" "$here/../docs/LIVE_EVAL.md"
-      echo "   Also copied to docs/LIVE_EVAL.md in your repo. Next: git add docs/LIVE_EVAL.md && git commit"
-    fi ;;
+    (cd "$HOME" && zip -qr "$dest.zip" "$(basename "$dest")")
+    say "Saved to $dest (and $dest.zip, ready to share)" ;;
   *) usage ;;
 esac

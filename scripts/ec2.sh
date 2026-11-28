@@ -164,7 +164,15 @@ prepare_cluster() {
   say "Loading the images into the cluster, so pods don't download them again"
   for img in $k8s_images; do
     docker image inspect "$img" >/dev/null 2>&1 || continue
-    kind load docker-image "$img" >/dev/null 2>&1 && echo "   $img" || echo "   $img (load failed; the cluster will download it itself)"
+    # kind load fails with Docker 29's image store; importing one platform
+    # straight into the node's containerd works around it.
+    if kind load docker-image "$img" >/dev/null 2>&1 ||
+       docker save --platform linux/amd64 "$img" 2>/dev/null |
+         docker exec -i kind-control-plane ctr -n k8s.io images import --platform linux/amd64 - >/dev/null 2>&1; then
+      echo "   $img"
+    else
+      echo "   $img (could not load it; the cluster will download it itself)"
+    fi
   done
 }
 
