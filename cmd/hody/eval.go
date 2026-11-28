@@ -19,6 +19,8 @@ import (
 // cmdEval runs every scenario under a directory and prints a results table.
 func cmdEval(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("eval", flag.ContinueOnError)
+	commandUsage(fs, "hody eval <scenario-dir> [options]",
+		"Runs the evaluation scenarios. Replay mode (the default) uses recorded tool output\nand a scripted model and checks plumbing and safety; --live diagnoses real broken\ncontainers and pods with the configured model (see eval/run-live.sh).")
 	live := fs.Bool("live", false, "use the real Docker daemon or cluster and the configured model (run each scenario's live/setup.sh first)")
 	work := fs.String("work", "", "directory for sessions and saved model requests (default: a new temp dir)")
 	var o diagnoseOpts

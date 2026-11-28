@@ -40,6 +40,41 @@ func New(kubeconfig string) (*Client, error) {
 // NewForClientset wraps an existing clientset, such as the fake one.
 func NewForClientset(cs kubernetes.Interface) *Client { return &Client{cs: cs} }
 
+// ServerVersion asks the API server for its version (a GET of /version),
+// to check that the cluster is reachable.
+func (c *Client) ServerVersion(ctx context.Context) (string, error) {
+	type result struct {
+		v   string
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		v, err := c.cs.Discovery().ServerVersion()
+		if err != nil {
+			ch <- result{err: err}
+			return
+		}
+		ch <- result{v: v.GitVersion}
+	}()
+	select {
+	case r := <-ch:
+		return r.v, r.err
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+}
+
+// CurrentContext returns the kubeconfig's current context, or "".
+func CurrentContext(kubeconfig string) string {
+	rules := clientcmd.NewDefaultClientConfigLoadingRules()
+	rules.ExplicitPath = kubeconfig
+	raw, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{}).RawConfig()
+	if err != nil {
+		return ""
+	}
+	return raw.CurrentContext
+}
+
 func (c *Client) pod(ctx context.Context, ns, name string) (*corev1.Pod, error) {
 	return c.cs.CoreV1().Pods(ns).Get(ctx, name, metav1.GetOptions{})
 }

@@ -21,6 +21,7 @@ import (
 
 func cmdServe(args []string, stderr io.Writer) error {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
+	commandUsage(fs, "hody serve [options]", "Opens the local web page, where you can start a diagnosis and read past ones.\nIt listens on 127.0.0.1 only.")
 	addr := fs.String("addr", "127.0.0.1:8080", "listen address; must be 127.0.0.1")
 	var o diagnoseOpts
 	fs.StringVar(&o.socket, "socket", defaultSocket(), "Docker socket path")

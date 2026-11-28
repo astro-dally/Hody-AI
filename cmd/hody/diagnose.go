@@ -28,6 +28,8 @@ type diagnoseOpts struct {
 
 func cmdDiagnose(args []string, stdout io.Writer) error {
 	fs := flag.NewFlagSet("diagnose", flag.ContinueOnError)
+	commandUsage(fs, "hody diagnose docker <container> [options]\n  hody diagnose k8s pod/<name> -n <namespace> [options]",
+		"Finds out why the container or pod failed: collects its status, logs, events and\nconfiguration, hides secrets, asks the AI model, checks the answer against the\nevidence, and reviews any proposed fix. Nothing is changed or applied.")
 	var o diagnoseOpts
 	fs.StringVar(&o.file, "file", "", "manifest or compose file to propose a fix against")
 	fs.StringVar(&o.socket, "socket", defaultSocket(), "Docker socket path")
@@ -118,11 +120,4 @@ func liveDeps(t model.Target, o diagnoseOpts, st *store.Store, recordDir string)
 		list = append(list, k...)
 	}
 	return pipeline.Deps{Tools: tools.NewRegistry(gw, t, list...), LLM: client, Gateway: gw, Store: st}, nil
-}
-
-func defaultSocket() string {
-	if h := os.Getenv("DOCKER_HOST"); strings.HasPrefix(h, "unix://") {
-		return strings.TrimPrefix(h, "unix://")
-	}
-	return "/var/run/docker.sock"
 }

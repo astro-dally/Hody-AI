@@ -6,7 +6,7 @@ Build Hody (`go build -o hody ./cmd/hody`) and point it at a model:
 
 ```sh
 export HODY_LLM_BASE_URL=http://localhost:11434/v1
-export HODY_LLM_MODEL=llama3.1
+export HODY_LLM_MODEL=qwen3:32b
 export HODY_LLM_API_KEY=          # empty for a local model
 export HODY_LLM_TIMEOUT=600       # optional: seconds per model request (default 180)
 ```
@@ -14,8 +14,9 @@ export HODY_LLM_TIMEOUT=600       # optional: seconds per model request (default
 ### A local model with Ollama
 
 1. Install Ollama from https://ollama.com and start it (`ollama serve`).
-2. Pull a model that follows instructions well: `ollama pull llama3.1`
-   (or `qwen2.5:14b` if your machine can run it; larger models diagnose better).
+2. Pull a model that follows instructions well. The live evaluation used
+   `qwen3:32b` (`ollama pull qwen3:32b`, about 20 GB) and `qwen3:30b`;
+   smaller models run on more machines but are untested with Hody.
 3. Ollama serves an OpenAI-compatible API at `http://localhost:11434/v1`;
    use the settings above.
 
@@ -27,6 +28,34 @@ Ollama silently cuts off prompts longer than its context window. Hody's
 prompts can run to several thousand tokens, so start Ollama with a larger
 window: `OLLAMA_CONTEXT_LENGTH=16384 ollama serve`. Models on a CPU are
 slow; raise `HODY_LLM_TIMEOUT` (for example to 900) if requests time out.
+
+### Check your setup
+
+`hody doctor` checks the three things Hody needs and says what to do about
+anything missing. It only reads: it lists containers, asks the cluster for
+its version, and asks the model server which models it has. It sends
+nothing to a model.
+
+```
+$ hody doctor
+Hody doctor
+
+  ✓ Docker      reachable at /Users/you/.docker/run/docker.sock (4 containers)
+  ✗ Kubernetes  no cluster configured
+                → only needed for pods: check that "kubectl get pods" works, or pass --kubeconfig
+  ✓ AI model    qwen3:32b at http://localhost:11434/v1
+
+Ready: Hody can diagnose Docker containers.
+```
+
+Hody finds the Docker socket on its own: `DOCKER_HOST` if it names a Unix
+socket, else `/var/run/docker.sock`, else where Docker Desktop, Colima,
+OrbStack and Rancher Desktop put theirs on a Mac. `hody version` prints
+the version; `hody <command> --help` lists a command's options; `hody`
+alone, at a terminal, says hello and lists the commands.
+
+The live evaluation used `qwen3:30b` and `qwen3:32b`. Smaller models are
+untested with Hody, and diagnose worse; see `docs/LIVE_EVAL.md`.
 
 ## Walkthrough 1: a Docker container
 
