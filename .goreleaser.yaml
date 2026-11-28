@@ -1,0 +1,79 @@
+# Release builds: run by .github/workflows/release.yml when a v* tag is
+# pushed. Try it locally with: goreleaser release --snapshot --clean
+version: 2
+project_name: hody
+
+before:
+  hooks:
+    - go mod verify
+
+builds:
+  - id: hody
+    main: ./cmd/hody
+    binary: hody
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version=v{{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .CommitDate }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+archives:
+  - id: hody
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+      - THIRD_PARTY_NOTICES.md
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  use: github
+  sort: asc
+  filters:
+    exclude:
+      - "^Merge "
+
+release:
+  github:
+    owner: astro-dally
+    name: Hody-AI
+  prerelease: auto
+  footer: |
+    **Install:** `brew install astro-dally/tap/hody` (macOS), download a binary above
+    (check it against `checksums.txt`), or `docker pull ghcr.io/astro-dally/hody:{{ .Version }}`.
+    Then run `hody doctor`. Live evaluation results: docs/LIVE_EVAL.md.
+
+# Homebrew: published to github.com/astro-dally/homebrew-tap when the
+# HOMEBREW_TAP_TOKEN secret is set (see docs/RELEASING.md); skipped otherwise.
+homebrew_casks:
+  - name: hody
+    binaries: [hody]
+    repository:
+      owner: astro-dally
+      name: homebrew-tap
+      token: '{{ index .Env "HOMEBREW_TAP_TOKEN" }}'
+    homepage: https://github.com/astro-dally/Hody-AI
+    description: Finds why a Docker container or Kubernetes pod failed, without sending secrets to the AI
+    license: MIT
+    skip_upload: '{{ if index .Env "HOMEBREW_TAP_TOKEN" }}false{{ else }}true{{ end }}'
+    hooks:
+      post:
+        # The binaries are not notarised by Apple, and Homebrew marks
+        # downloads as quarantined, so macOS would refuse to run hody.
+        # Homebrew's install steps allow only listed actions; "run" is one.
+        # If it ever fails, the install still succeeds (README: "Install").
+        install_steps: |
+          on_macos do
+            run "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "hody"], chdir: ".", must_succeed: false
+          end

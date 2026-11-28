@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Go ${{ matrix.go }}, ${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        go: [stable, oldstable]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: ${{ matrix.go }}
+      - name: Verify modules
+        run: go mod verify
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then echo "Not formatted:"; echo "$unformatted"; exit 1; fi
+      - name: go vet
+        run: go vet ./...
+      - name: Tests
+        run: go test -count=1 ./...
+      - name: Tests with the race detector
+        if: runner.os == 'Linux'
+        run: go test -count=1 -race ./...
+
+  eval:
+    name: Replay evaluation and live-runner rehearsal
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version: stable
+      - name: Build
+        run: go build -o hody ./cmd/hody
+      - name: Replay evaluation (12 scenarios, scripted model)
+        run: HODY_DATA_DIR="$RUNNER_TEMP/hody" ./hody eval eval/scenarios
+      - name: Live-runner rehearsal (dry run)
+        run: DRY_RUN=1 bash eval/run-live.sh
+      - name: Keep the rehearsal summary
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: eval-dry-run
+          path: eval/results/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  vulncheck:
+    name: Known vulnerabilities (govulncheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+        with:
+          go-version-input: stable
+          go-package: ./...
+
+  docker:
+    name: Docker image builds and runs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build -f deploy/Dockerfile -t hody:ci .
+      - name: Run it
+        run: |
+          docker run --rm hody:ci version
+          docker run --rm hody:ci help >/dev/null
+      - name: It runs as a non-root user
+        run: |
+          user=$(docker image inspect hody:ci --format '{{.Config.User}}')
+          echo "image user: $user"
+          case "$user" in ""|root|0|0:0) echo "the image runs as root"; exit 1 ;; esac
+
+  kubernetes:
+    name: Read-only permissions on a real cluster
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: helm/kind-action@ea822c7bf1874f08e5a491df991c228edffc3376 # v1.15.2
+        with:
+          cluster_name: hody-ci
+      - name: Check the ClusterRole allows reads and nothing else
+        run: bash deploy/check-readonly-rbac.sh
