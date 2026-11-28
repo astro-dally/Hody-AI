@@ -172,7 +172,7 @@ bash eval/run-live.sh               # one scenario at a time: set up, wait for t
 cat eval/results/live-*/summary.md
 ```
 
-**Recorded live result** ([docs/LIVE_EVAL.md](docs/LIVE_EVAL.md), qwen3:32b, real Docker and Kubernetes): 10 of 12 scenarios passed every check; category, object and field each right in 10 of 11; no planted secret in any of the 53 requests sent to the model; all 12 injection lines flagged; and Hody's diff check blocked 7 malformed fixes, 6 of which the LLM critic had approved. [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) explains every result, including what failed.
+**Recorded live result** ([docs/LIVE_EVAL.md](docs/LIVE_EVAL.md), qwen3:32b, real Docker and Kubernetes): 11 of 12 scenarios passed every check; category and object right in 11 of 11, field in 10 of 11; all 11 proposed edits applied cleanly to the manifest (up from 4 of 11 with hand-written diffs on the same model); no planted secret in any of the 57 requests sent to the model; all 12 injection lines flagged. The miss: the "not enough evidence" scenario still got an invented cause. Across four runs, 194 model requests carried no planted secret, and Hody's deterministic checks caught bad fixes the AI critic approved. [docs/BUILD_REPORT.md](docs/BUILD_REPORT.md) explains every result, including what failed.
 
 [docs/LIVE_TEST_GUIDE.md](docs/LIVE_TEST_GUIDE.md) walks through a complete live run on an AWS EC2 server, step by step. See [eval/README.md](eval/README.md) for how scenarios work and how to add your own.
 

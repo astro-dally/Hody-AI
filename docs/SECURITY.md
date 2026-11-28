@@ -171,7 +171,9 @@ replays live run 3's invented cause, which Hody's note turns into an
 abstention).
 
 **Does not cover:** whether a real model abstains when it should is an
-accuracy question, measurable only in live mode.
+accuracy question, measurable only in live mode. In the final live run it
+did not: the model named a cause under a category of its own, which the
+signature check cannot judge (`docs/BUILD_REPORT.md`, "Final live run").
 
 ## Read-only by construction
 
