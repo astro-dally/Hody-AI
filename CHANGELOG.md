@@ -4,6 +4,15 @@ All notable changes to Hody are listed here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and versions
 follow [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-11-28
+
+### Fixed
+
+- Publishing the Homebrew cask: GoReleaser requires the tap token setting
+  to be exactly one environment variable, and v0.1.0's release stopped at
+  that step (its binaries and image were published). With this release,
+  `brew install astro-dally/tap/hody` works.
+
 ## [0.1.0] - 2026-11-28
 
 The first release: the version measured in the final live evaluation
@@ -53,4 +62,5 @@ The first release: the version measured in the final live evaluation
   race detector, the replay evaluation, govulncheck, the Docker image,
   and the read-only ClusterRole on a kind cluster.
 
+[0.1.1]: https://github.com/astro-dally/Hody-AI/releases/tag/v0.1.1
 [0.1.0]: https://github.com/astro-dally/Hody-AI/releases/tag/v0.1.0

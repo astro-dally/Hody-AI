@@ -76,7 +76,14 @@ does not move the image's `latest` tag.
 
 ## If a release fails
 
-Fix the problem on `main`, then move the tag to the fixed commit:
+If the release page already has downloads, people may have fetched them and
+checked them against `checksums.txt`, so never move that version to other
+code: fix the problem on `main` and release the next patch version (v0.1.0
+failed at the Homebrew step after publishing, so the fix shipped as
+v0.1.1).
+
+If it failed before anything was published, fix the problem on `main`,
+then move the tag to the fixed commit:
 
 ```sh
 git push --delete origin v0.1.0   # remove the tag on GitHub

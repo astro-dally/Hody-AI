@@ -62,7 +62,8 @@ homebrew_casks:
     repository:
       owner: astro-dally
       name: homebrew-tap
-      token: '{{ index .Env "HOMEBREW_TAP_TOKEN" }}'
+      # GoReleaser accepts exactly one environment variable here, nothing else.
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: https://github.com/astro-dally/Hody-AI
     description: Finds why a Docker container or Kubernetes pod failed, without sending secrets to the AI
     license: MIT
