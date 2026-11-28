@@ -48,7 +48,10 @@ Without the variable, the image goes to `ghcr.io` only.
   profile → Packages → `hody` → Package settings → Change visibility →
   Public.
 - Turn on Settings → Code security → *Private vulnerability reporting*,
-  which `.github/SECURITY.md` points to, and *Dependabot alerts*.
+  which `.github/SECURITY.md` points to, *Dependabot alerts* and
+  *Dependabot security updates* (pull requests that fix vulnerable
+  dependencies as soon as an advisory appears, between the weekly
+  updates).
 
 ## Cutting a release
 

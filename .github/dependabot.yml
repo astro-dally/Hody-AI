@@ -4,6 +4,11 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Indirect modules too: the first CI run's govulncheck found known HTTP/2
+    # vulnerabilities in golang.org/x/net, which Hody uses only through
+    # client-go, so direct-only updates would never have fixed them.
+    allow:
+      - dependency-type: all
     groups:
       kubernetes:
         patterns: ["k8s.io/*", "sigs.k8s.io/*"]
